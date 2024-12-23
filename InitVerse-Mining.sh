@@ -51,10 +51,10 @@ worker_name="${worker_name:-Workerr001}"
 echo -e "${GREEN}Worker name yang dipilih: $worker_name. Keren kan?${NC}"
 
 # Membuat folder dan mengunduh perangkat lunak mining
-echo -e "${BLUE}Bikin folder buat mining dan unduh perangkat lunak...${NC}"
+echo -e "${YELLOW}Downloading mining software...${NC}"
 mkdir -p ~/ini-miner
 cd ~/ini-miner
-wget https://github.com/Project-InitVerse/ini-miner/releases/download/v1.0.0/iniminer-linux-x64 -O iniminer-linux-x64
+wget "https://github.com/Project-InitVerse/ini-miner/releases/download/v1.0.0/iniminer-linux-x64" -O iniminer-linux-x64
 
 # Mengecek apakah file berhasil diunduh
 if [ $? -eq 0 ]; then
@@ -126,8 +126,34 @@ mkdir -p $SOLO_MINING_DIR
 cd $SOLO_MINING_DIR
 
 # Mengunduh perangkat lunak geth untuk Solo Mining
-echo -e "${BLUE}Mengunduh perangkat lunak geth untuk solo mining...${NC}"
-wget https://github.com/Project-InitVerse/ini-chain/releases/download/v1.0.0/geth-linux-x64
+echo -e "${YELLOW}Downloading and extracting Solo Mining software...${NC}"
+wget "https://github.com/Project-InitVerse/ini-chain/archive/refs/tags/v1.0.0.tar.gz" -O ini-chain.tar.gz
+
+# Mengecek apakah file berhasil diunduh
+if [ $? -eq 0 ]; then
+    echo -e "${GREEN}Perangkat lunak Solo Mining berhasil diunduh!${NC}"
+else
+    echo -e "${RED}Gagal ngunduh perangkat lunak Solo Mining! Wah, ada yang salah nih!${NC}"
+    exit 1
+fi
+
+# Mengekstrak file dan memberikan izin eksekusi
+tar -xzf ini-chain.tar.gz --strip-components=1
+
+# Mengunduh geth-linux-x64 setelah ekstraksi solo mining selesai
+echo -e "${YELLOW}Downloading geth-linux-x64 for Solo Mining...${NC}"
+wget "https://github.com/Project-InitVerse/ini-chain/releases/download/v1.0.0/geth-linux-x64"
+
+# Mengecek apakah file berhasil diunduh
+if [ $? -eq 0 ]; then
+    echo -e "${GREEN}File geth-linux-x64 berhasil diunduh!${NC}"
+else
+    echo -e "${RED}Gagal ngunduh file geth-linux-x64! Wah, ada yang salah nih!${NC}"
+    exit 1
+fi
+
+# Memberikan izin eksekusi pada file geth-linux-x64
+chmod +x geth-linux-x64
 
 # Menampilkan jumlah CPU yang tersisa untuk Solo Mining
 echo -e "${CYAN}Sisa CPU yang tersedia untuk solo mining: $CPU_CORES${NC}"
