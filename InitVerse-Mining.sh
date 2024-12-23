@@ -19,48 +19,16 @@ else
     exit 1
 fi
 
-# Instalasi NVM, biar bisa pakai Node.js yang keren
-echo -e "${BLUE}Yuk kita pasang NVM, biar bisa install Node.js yang kece!${NC}"
-curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.0/install.sh | bash
-if [ $? -eq 0 ]; then
-    echo -e "${GREEN}NVM sukses terpasang! Keren kan?${NC}"
-else
-    echo -e "${RED}Gagal pasang NVM! Ada yang gak beres nih...${NC}"
-    exit 1
-fi
-
-# Menambahkan NVM ke dalam konfigurasi shell
-echo 'export NVM_DIR="$HOME/.nvm"' >> $HOME/.bash_profile
-echo '[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # Ini buat muat nvm' >> $HOME/.bash_profile
-echo '[ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # Ini buat bash completion nvm' >> $HOME/.bash_profile
-
-# Muat ulang profil bash biar NVM-nya jalan
-source $HOME/.bash_profile
-
-# Instalasi Node.js versi LTS
-echo -e "${BLUE}Sedang menginstal Node.js LTS... Pasti keren deh!${NC}"
-nvm install --lts
-if [ $? -eq 0 ]; then
-    echo -e "${GREEN}Node.js LTS udah terpasang! Kamu siap bikin aplikasi!${NC}"
-else
-    echo -e "${RED}Gagal pasang Node.js. Ada yang salah nih!${NC}"
-    exit 1
-fi
-
-# Menampilkan versi Node.js dan NPM
-echo -e "${BLUE}Versi Node.js yang terpasang:${NC}"
-node -v
-echo -e "${BLUE}Versi NPM yang terpasang:${NC}"
-npm -v
-
-# Pasang Python 3.10 dan venv buat projek-projek keren
-echo -e "${BLUE}Sekarang kita pasang python3.10-venv biar bisa coding Python!${NC}"
-sudo apt install python3.10-venv -y
-if [ $? -eq 0 ]; then
-    echo -e "${GREEN}Python 3.10-venv terpasang dengan sukses!${NC}"
-else
-    echo -e "${RED}Gagal pasang Python 3.10-venv! Ada yang ngaco nih...${NC}"
-    exit 1
+# Install systemctl jika belum ada
+if ! command -v systemctl &> /dev/null; then
+    echo -e "${BLUE}Systemd belum terpasang. Sekarang kita pasang!${NC}"
+    sudo apt-get install systemd -y
+    if [ $? -eq 0 ]; then
+        echo -e "${GREEN}Systemd berhasil dipasang!${NC}"
+    else
+        echo -e "${RED}Gagal pasang Systemd. Ada yang error nih!${NC}"
+        exit 1
+    fi
 fi
 
 # Mengonfigurasi Mining Pool
@@ -84,8 +52,8 @@ echo -e "${GREEN}Worker name yang dipilih: $worker_name. Keren kan?${NC}"
 
 # Membuat folder dan mengunduh perangkat lunak mining
 echo -e "${BLUE}Bikin folder buat mining dan unduh perangkat lunak...${NC}"
-mkdir -p /root/ini-miner
-cd /root/ini-miner
+mkdir -p ~/ini-miner
+cd ~/ini-miner
 wget https://github.com/Project-InitVerse/ini-miner/releases/download/v1.0.0/iniminer-linux-x64 -O iniminer-linux-x64
 
 # Mengecek apakah file berhasil diunduh
@@ -124,10 +92,10 @@ Description=Mining Pool Service
 After=network.target
 
 [Service]
-ExecStart=$MINING_POOL_CMD
-WorkingDirectory=/root/ini-miner
+ExecStart=/home/$USER/ini-miner/iniminer-linux-x64 --pool stratum+tcp://$reward_address.$worker_name@pool-core-testnet.inichain.com:32672
+WorkingDirectory=/home/$USER/ini-miner
 Restart=always
-User=root
+User=$USER
 
 [Install]
 WantedBy=multi-user.target" | sudo tee /etc/systemd/system/mining-pool.service
@@ -153,7 +121,7 @@ done
 
 # Membuat folder Solo Mining setelah wallet address dimasukkan
 echo -e "${CYAN}Membuat folder khusus untuk Solo Mining...${NC}"
-SOLO_MINING_DIR=/root/solo-mining
+SOLO_MINING_DIR=~/solo-mining
 mkdir -p $SOLO_MINING_DIR
 cd $SOLO_MINING_DIR
 
@@ -181,10 +149,10 @@ Description=Solo Mining Service
 After=network.target
 
 [Service]
-ExecStart=/bin/bash /root/solo-mining/solo_mining_cmd.sh
-WorkingDirectory=/root/solo-mining
+ExecStart=/bin/bash /home/$USER/solo-mining/solo_mining_cmd.sh
+WorkingDirectory=/home/$USER/solo-mining
 Restart=always
-User=root
+User=$USER
 
 [Install]
 WantedBy=multi-user.target" | sudo tee /etc/systemd/system/solo-mining.service
@@ -194,4 +162,5 @@ sudo systemctl daemon-reload
 sudo systemctl enable solo-mining.service
 sudo systemctl start solo-mining.service
 
-echo -e "${GREEN}Solo Mining dan Mining Pool telah siap! Kamu sudah siap menambang!${NC}"
+# Menyelesaikan Setup
+echo -e "${GREEN}Woohoo! Setup Mining Pool dan Solo Mining udah selesai! Ayo mulai nambang!${NC}"
