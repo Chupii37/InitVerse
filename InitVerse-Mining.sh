@@ -20,7 +20,6 @@ FULL_NODE_URL="https://github.com/Project-InitVerse/ini-chain/releases/download/
 
 # Function to print header
 print_header() {
-    # clear  # Menonaktifkan clear untuk menghindari kedipan
     echo -e "${CYAN}=================================================${NC}"
     echo -e "${MAGENTA}       InitVerse Setup${NC}"  # Pesan sambutan baru
     echo -e "${CYAN}=================================================${NC}"
@@ -54,6 +53,24 @@ check_requirements() {
     done
 }
 
+# Function to handle user input more robustly
+get_user_input() {
+    local prompt=$1
+    local valid_input_pattern=$2
+    local input=""
+    
+    while true; do
+        echo -e "$prompt"
+        read -r input
+        if [[ "$input" =~ $valid_input_pattern ]]; then
+            echo "$input"
+            break
+        else
+            echo -e "${RED}Invalid input. Please try again.${NC}"
+        fi
+    done
+}
+
 # Main menu function
 main_menu() {
     while true; do
@@ -63,28 +80,30 @@ main_menu() {
         echo -e "${CYAN}3. Check System Requirements${NC}"
         echo -e "${CYAN}4. Exit${NC}"
         echo -e "${PURPLE}=================================================${NC}"
-        echo -e "${YELLOW}Please select an option (1-4):${NC}"
         
-        # Menggunakan read dengan opsi -r untuk menghindari karakter tak terlihat
-        read -r choice
+        # Using the get_user_input function to ensure only valid options are accepted
+        choice=$(get_user_input "Please select an option (1-4):" "^[1-4]$")
         
-        # Debugging: Menampilkan pilihan untuk memastikan input diterima dengan benar
-        echo "You selected: $choice"
-        
-        # Mengecek apakah input sesuai dengan angka 1-4
-        if [[ "$choice" =~ ^[1-4]$ ]]; then
-            case $choice in
-                1) setup_pool_mining ;;
-                2) setup_solo_mining ;;
-                3) check_requirements ;;
-                4) echo -e "${GREEN}Exiting...${NC}"; exit 0 ;;
-            esac
-        else
-            echo -e "${RED}Invalid option, please choose between 1 and 4.${NC}"
-        fi
-        
-        # Menghapus bagian sleep agar tidak ada jeda waktu tambahan
+        # Handle user choice
+        case $choice in
+            1) setup_pool_mining ;;
+            2) setup_solo_mining ;;
+            3) check_requirements ;;
+            4) echo -e "${GREEN}Exiting...${NC}"; exit 0 ;;
+        esac
     done
+}
+
+# Function to setup pool mining
+setup_pool_mining() {
+    echo -e "${YELLOW}Setting up Pool Mining...${NC}"
+    # Additional pool mining setup logic
+}
+
+# Function to setup solo mining
+setup_solo_mining() {
+    echo -e "${YELLOW}Setting up Solo Mining...${NC}"
+    # Additional solo mining setup logic
 }
 
 # Start the script
