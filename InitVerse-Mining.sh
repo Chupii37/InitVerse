@@ -61,12 +61,12 @@ setup_pool_mining() {
     # Get wallet address if not already set
     while [ -z "$WALLET_ADDRESS" ] || ! validate_wallet "$WALLET_ADDRESS"; do
         echo -e "${CYAN}Enter your wallet address (0x...):${NC}"
-        read -e WALLET_ADDRESS
+        read WALLET_ADDRESS
     done
     
     # Get worker name
     echo -e "${CYAN}Enter worker name (default: Worker001):${NC}"
-    read -e input_worker
+    read input_worker
     WORKER_NAME=${input_worker:-$WORKER_NAME}
     
     # Create directory and download mining software
@@ -88,27 +88,27 @@ setup_pool_mining() {
     
     # Get number of CPU cores to use
     echo -e "${CYAN}Enter number of CPU cores to use (1-${CPU_CORES}, default: 1):${NC}"
-    read -e cores
+    read cores
     cores=${cores:-1}
     
     for ((i=0; i<cores; i++)); do
         MINING_CMD+=" --cpu-devices $i"
     done
     
-    # Start mining in background using screen
+    # Start mining
     echo -e "${GREEN}Starting mining with command:${NC}"
     echo -e "${BLUE}$MINING_CMD${NC}"
-    screen -dmS pool_mining_session $MINING_CMD
+    eval "$MINING_CMD"
 }
 
-# Function to setup solo mining
+# Function to set up solo mining
 setup_solo_mining() {
     echo -e "${YELLOW}Setting up Solo Mining...${NC}"
     
     # Get wallet address if not already set
     while [ -z "$WALLET_ADDRESS" ] || ! validate_wallet "$WALLET_ADDRESS"; do
         echo -e "${CYAN}Enter your wallet address (0x...):${NC}"
-        read -e WALLET_ADDRESS
+        read WALLET_ADDRESS
     done
     
     # Download and set up full node
@@ -122,18 +122,19 @@ setup_solo_mining() {
     
     # Start node
     echo -e "${GREEN}Starting full node...${NC}"
-    screen -dmS solo_mining_session ./geth-linux-x64 --datadir data --http.api="eth,admin,miner,net,web3,personal" --allow-insecure-unlock --testnet console
+    ./geth-linux-x64 --datadir data --http.api="eth,admin,miner,net,web3,personal" --allow-insecure-unlock --testnet console
     
     # Set up mining
     echo -e "${YELLOW}Setting up mining...${NC}"
-    screen -S solo_mining_session -X stuff "miner.setEtherbase(\"$WALLET_ADDRESS\")\n"
+    echo "miner.setEtherbase(\"$WALLET_ADDRESS\")"
     
     # Get number of CPU cores to use
     echo -e "${CYAN}Enter number of CPU cores to use (1-${CPU_CORES}, default: 1):${NC}"
-    read -e cores
+    read cores
     cores=${cores:-1}
     
-    screen -S solo_mining_session -X stuff "miner.start($cores)\n"
+    # Command to start mining
+    echo "miner.start($cores)"
 }
 
 # Main menu function
@@ -147,7 +148,7 @@ main_menu() {
         echo -e "${CYAN}4. Exit${NC}"
         echo -e "${PURPLE}=================================================${NC}"
         echo -e "${YELLOW}Please select an option (1-4):${NC}"
-        read -e choice
+        read choice
         
         # Debugging: Show the value of $choice
         echo "You selected: $choice"
