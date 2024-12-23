@@ -26,6 +26,15 @@ print_header() {
     echo -e "${CYAN}=================================================${NC}"
 }
 
+# Function to validate wallet address format
+validate_wallet() {
+    if [[ ! "$1" =~ ^0x[a-fA-F0-9]{40}$ ]]; then
+        echo -e "${RED}Invalid wallet address format. Please make sure it's a valid Ethereum address.${NC}"
+        return 1
+    fi
+    return 0
+}
+
 # Function to check system requirements
 check_requirements() {
     echo -e "${YELLOW}Checking system requirements...${NC}"
@@ -91,14 +100,20 @@ setup_pool_mining() {
     read cores
     cores=${cores:-1}
     
+    # Ensure cores don't exceed available CPU cores
+    if (( cores > CPU_CORES )); then
+        cores=$CPU_CORES
+        echo -e "${RED}Warning: You have selected more cores than available. Using $CPU_CORES cores.${NC}"
+    fi
+    
     for ((i=0; i<cores; i++)); do
         MINING_CMD+=" --cpu-devices $i"
     done
     
-    # Start mining
+    # Start mining using screen in background
     echo -e "${GREEN}Starting mining with command:${NC}"
     echo -e "${BLUE}$MINING_CMD${NC}"
-    eval "$MINING_CMD"
+    screen -dmS pool_mining_session eval "$MINING_CMD"
 }
 
 # Function to set up solo mining
