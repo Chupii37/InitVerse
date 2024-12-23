@@ -53,48 +53,14 @@ node -v
 echo -e "${BLUE}Versi NPM yang terpasang:${NC}"
 npm -v
 
-# Mengecek versi Python yang tersedia
-echo -e "${BLUE}Cek versi Python yang tersedia di sistem...${NC}"
-PYTHON_VERSION=$(python3 --version 2>&1)
-
-# Mengecek apakah Python 3 sudah terinstal
-if [[ "$PYTHON_VERSION" =~ "Python 3" ]]; then
-    echo -e "${GREEN}Python 3 sudah terpasang! Versi yang terpasang: $PYTHON_VERSION${NC}"
-else
-    echo -e "${RED}Python 3 belum terpasang! Ayo kita install...${NC}"
-    sudo apt install python3 -y
-    if [ $? -eq 0 ]; then
-        echo -e "${GREEN}Python 3 berhasil dipasang!${NC}"
-    else
-        echo -e "${RED}Gagal pasang Python 3!${NC}"
-        exit 1
-    fi
-fi
-
-# Menginstal python3-venv sesuai versi Python yang ada
-echo -e "${BLUE}Mencoba menginstal python3-venv untuk versi Python yang ada...${NC}"
-sudo apt install python3-venv -y
+# Pasang Python 3.10 dan venv buat projek-projek keren
+echo -e "${BLUE}Sekarang kita pasang python3.10-venv biar bisa coding Python!${NC}"
+sudo apt install python3.10-venv -y
 if [ $? -eq 0 ]; then
-    echo -e "${GREEN}python3-venv berhasil terpasang!${NC}"
+    echo -e "${GREEN}Python 3.10-venv terpasang dengan sukses!${NC}"
 else
-    echo -e "${RED}Gagal pasang python3-venv! Ada yang ngaco nih...${NC}"
+    echo -e "${RED}Gagal pasang Python 3.10-venv! Ada yang ngaco nih...${NC}"
     exit 1
-fi
-
-# Mengecek apakah systemctl terinstal
-echo -e "${BLUE}Sekarang kita cek apakah systemctl sudah terpasang...${NC}"
-if ! command -v systemctl &> /dev/null
-then
-    echo -e "${YELLOW}Systemctl tidak ditemukan, yuk kita pasang!${NC}"
-    sudo apt install systemd -y
-    if [ $? -eq 0 ]; then
-        echo -e "${GREEN}Systemctl berhasil dipasang!${NC}"
-    else
-        echo -e "${RED}Gagal memasang systemctl. Ada yang salah nih!${NC}"
-        exit 1
-    fi
-else
-    echo -e "${GREEN}Systemctl sudah terpasang!${NC}"
 fi
 
 # Mengonfigurasi Mining Pool
@@ -118,8 +84,8 @@ echo -e "${GREEN}Worker name yang dipilih: $worker_name. Keren kan?${NC}"
 
 # Membuat folder dan mengunduh perangkat lunak mining
 echo -e "${BLUE}Bikin folder buat mining dan unduh perangkat lunak...${NC}"
-mkdir -p ~/ini-miner
-cd ~/ini-miner
+mkdir -p /root/ini-miner
+cd /root/ini-miner
 wget https://github.com/Project-InitVerse/ini-miner/releases/download/v1.0.0/iniminer-linux-x64 -O iniminer-linux-x64
 
 # Mengecek apakah file berhasil diunduh
@@ -159,9 +125,9 @@ After=network.target
 
 [Service]
 ExecStart=$MINING_POOL_CMD
-WorkingDirectory=/home/username/ini-miner
+WorkingDirectory=/root/ini-miner
 Restart=always
-User=$USER
+User=root
 
 [Install]
 WantedBy=multi-user.target" | sudo tee /etc/systemd/system/mining-pool.service
@@ -187,7 +153,7 @@ done
 
 # Membuat folder Solo Mining setelah wallet address dimasukkan
 echo -e "${CYAN}Membuat folder khusus untuk Solo Mining...${NC}"
-SOLO_MINING_DIR=~/solo-mining
+SOLO_MINING_DIR=/root/solo-mining
 mkdir -p $SOLO_MINING_DIR
 cd $SOLO_MINING_DIR
 
@@ -215,10 +181,10 @@ Description=Solo Mining Service
 After=network.target
 
 [Service]
-ExecStart=/bin/bash /home/$USER/solo-mining/solo_mining_cmd.sh
-WorkingDirectory=/home/$USER/solo-mining
+ExecStart=/bin/bash /root/solo-mining/solo_mining_cmd.sh
+WorkingDirectory=/root/solo-mining
 Restart=always
-User=$USER
+User=root
 
 [Install]
 WantedBy=multi-user.target" | sudo tee /etc/systemd/system/solo-mining.service
@@ -228,5 +194,4 @@ sudo systemctl daemon-reload
 sudo systemctl enable solo-mining.service
 sudo systemctl start solo-mining.service
 
-# Menyelesaikan Setup
-echo -e "${GREEN}Woohoo! Setup Mining Pool dan Solo Mining udah selesai! Ayo mulai nambang!${NC}"
+echo -e "${GREEN}Solo Mining dan Mining Pool telah siap! Kamu sudah siap menambang!${NC}"
