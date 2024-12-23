@@ -86,12 +86,21 @@ main_menu() {
         
         # Handle user choice
         case $choice in
-            1) setup_pool_mining ;;
-            2) setup_solo_mining ;;
-            3) check_requirements ;;
+            1) 
+                setup_pool_mining
+                read -p "Press [Enter] to return to the main menu..." ;;
+            2) 
+                setup_solo_mining
+                read -p "Press [Enter] to return to the main menu..." ;;
+            3) 
+                check_requirements
+                read -p "Press [Enter] to return to the main menu..." ;;
             4) 
                 echo -e "${GREEN}Exiting...${NC}"
                 exit 0 ;;  # Exit the program immediately
+            *) 
+                echo -e "${RED}Invalid choice. Please select between 1 and 4.${NC}"
+                read -p "Press [Enter] to try again..." ;;
         esac
     done
 }
