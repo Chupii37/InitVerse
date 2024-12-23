@@ -16,160 +16,153 @@ CPU_CORES=$(nproc)
 MINING_SOFTWARE_URL="https://github.com/Project-InitVerse/ini-miner/releases/download/v1.0.0/iniminer-linux-x64"
 POOL_ADDRESS="pool-core-testnet.inichain.com:32672"
 MINER_DIR="/root/ini-miner"
+FULL_NODE_URL="https://github.com/Project-InitVerse/ini-chain/releases/download/v1.0.0/ini-chain.tar.gz"
 
-# Update system
-echo -e "${BLUE}Yo, kita lagi ngupdate sistem nih! Biar gak ketinggalan zaman...${NC}"
-sudo apt-get update && sudo apt-get upgrade -y
-if [ $? -eq 0 ]; then
-    echo -e "${GREEN}Sistem udah kekinian! Semua paket terupdate!${NC}"
-else
-    echo -e "${RED}Aduh, ada yang salah. Gagal update nih!${NC}"
-    exit 1
-fi
+# Function to print header
+print_header() {
+    clear
+    echo -e "${CYAN}=================================================${NC}"
+    echo -e "${MAGENTA}       InitVerse Setup${NC}"  # Pesan sambutan baru
+    echo -e "${CYAN}=================================================${NC}"
+}
 
-# Memastikan alamat wallet sudah ada atau meminta input jika kosong
-while true; do
-    if [[ -z "$WALLET_ADDRESS" ]]; then
-        echo -e "${RED}Reward address belum diset. Silakan masukkan alamat wallet untuk Solo Mining!${NC}"
-        read -p "Masukkan alamat wallet (contoh: 0x...): " WALLET_ADDRESS
-    else
-        echo -e "${GREEN}Reward address sudah diset: $WALLET_ADDRESS${NC}"
-        break
+# Function to check system requirements
+check_requirements() {
+    echo -e "${YELLOW}Checking system requirements...${NC}"
+    
+    # Check CPU
+    echo -e "${CYAN}CPU Information:${NC}"
+    lscpu | grep "Model name"
+    echo -e "Available cores: ${GREEN}$CPU_CORES${NC}"
+    
+    # Check RAM
+    total_ram=$(free -h | awk '/^Mem:/{print $2}')
+    echo -e "Total RAM: ${GREEN}$total_ram${NC}"
+    
+    # Check disk space
+    disk_space=$(df -h / | awk 'NR==2 {print $4}')
+    echo -e "Available disk space: ${GREEN}$disk_space${NC}"
+    
+    # Check for required software
+    echo -e "\n${CYAN}Checking required software:${NC}"
+    for cmd in wget tar gzip; do
+        if command -v $cmd >/dev/null 2>&1; then
+            echo -e "$cmd: ${GREEN}Installed${NC}"
+        else
+            echo -e "$cmd: ${RED}Not installed${NC}"
+        fi
+    done
+}
+
+# Function to setup pool mining
+setup_pool_mining() {
+    echo -e "${YELLOW}Setting up Pool Mining...${NC}"
+    
+    # Get wallet address if not already set
+    while [ -z "$WALLET_ADDRESS" ] || ! validate_wallet "$WALLET_ADDRESS"; do
+        echo -e "${CYAN}Enter your wallet address (0x...):${NC}"
+        read WALLET_ADDRESS
+    done
+    
+    # Get worker name
+    echo -e "${CYAN}Enter worker name (default: Worker001):${NC}"
+    read input_worker
+    WORKER_NAME=${input_worker:-$WORKER_NAME}
+    
+    # Create directory and download mining software
+    mkdir -p ini-miner && cd ini-miner
+    
+    # Download and extract mining software
+    echo -e "${YELLOW}Downloading mining software...${NC}"
+    wget "$MINING_SOFTWARE_URL" -O iniminer-linux-x64
+    chmod +x iniminer-linux-x64
+    
+    # Check if executable exists
+    if [ ! -f "./iniminer-linux-x64" ]; then
+        echo -e "${RED}Error: Mining software not found${NC}"
+        return 1
     fi
-done
+    
+    # Set up mining command
+    MINING_CMD="./iniminer-linux-x64 --pool stratum+tcp://${WALLET_ADDRESS}.${WORKER_NAME}@${POOL_ADDRESS}"
+    
+    # Get number of CPU cores to use
+    echo -e "${CYAN}Enter number of CPU cores to use (1-${CPU_CORES}, default: 1):${NC}"
+    read cores
+    cores=${cores:-1}
+    
+    for ((i=0; i<cores; i++)); do
+        MINING_CMD+=" --cpu-devices $i"
+    done
+    
+    # Start mining in background using screen
+    echo -e "${GREEN}Starting mining with command:${NC}"
+    echo -e "${BLUE}$MINING_CMD${NC}"
+    screen -dmS pool_mining_session $MINING_CMD
+}
 
-# Meminta input nama worker
-read -p "Masukkan nama worker (default: Worker001): " WORKER_NAME
-WORKER_NAME="${WORKER_NAME:-Worker001}"
-echo -e "${GREEN}Worker name yang dipilih: $WORKER_NAME${NC}"
+# Function to setup solo mining
+setup_solo_mining() {
+    echo -e "${YELLOW}Setting up Solo Mining...${NC}"
+    
+    # Get wallet address if not already set
+    while [ -z "$WALLET_ADDRESS" ] || ! validate_wallet "$WALLET_ADDRESS"; do
+        echo -e "${CYAN}Enter your wallet address (0x...):${NC}"
+        read WALLET_ADDRESS
+    done
+    
+    # Download and set up full node
+    echo -e "${YELLOW}Downloading full node...${NC}"
+    wget "$FULL_NODE_URL" -O ini-chain.tar.gz
+    tar -xzf ini-chain.tar.gz
+    
+    # Download Geth
+    wget https://github.com/Project-InitVerse/ini-chain/releases/download/v1.0.0/geth-linux-x64
+    chmod +x geth-linux-x64
+    
+    # Start node
+    echo -e "${GREEN}Starting full node...${NC}"
+    screen -dmS solo_mining_session ./geth-linux-x64 --datadir data --http.api="eth,admin,miner,net,web3,personal" --allow-insecure-unlock --testnet console
+    
+    # Set up mining
+    echo -e "${YELLOW}Setting up mining...${NC}"
+    screen -S solo_mining_session -X stuff "miner.setEtherbase(\"$WALLET_ADDRESS\")\n"
+    
+    # Get number of CPU cores to use
+    echo -e "${CYAN}Enter number of CPU cores to use (1-${CPU_CORES}, default: 1):${NC}"
+    read cores
+    cores=${cores:-1}
+    
+    screen -S solo_mining_session -X stuff "miner.start($cores)\n"
+}
 
-# Mengecek jumlah core CPU yang tersedia
-echo -e "${CYAN}Total core CPU yang tersedia: $CPU_CORES. Banyak banget kan?${NC}"
+# Main menu function
+main_menu() {
+    while true; do
+        clear
+        print_header
+        echo -e "${CYAN}1. Setup Pool Mining${NC}"
+        echo -e "${CYAN}2. Setup Solo Mining${NC}"
+        echo -e "${CYAN}3. Check System Requirements${NC}"
+        echo -e "${CYAN}4. Exit${NC}"
+        echo -e "${PURPLE}=================================================${NC}"
+        echo -e "${YELLOW}Please select an option (1-4):${NC}"
+        read choice
+        
+        case $choice in
+            1) setup_pool_mining ;;
+            2) setup_solo_mining ;;
+            3) check_requirements ;;
+            4) echo -e "${GREEN}Exiting...${NC}"; exit 0 ;;
+            *) echo -e "${RED}Invalid option${NC}"; sleep 2 ;;
+        esac
+        
+        if [ "$choice" != "4" ]; then
+            echo -e "\n${YELLOW}Press Enter to return to main menu...${NC}"
+            read
+        fi
+    done
+}
 
-# Meminta input jumlah core CPU untuk Mining Pool
-read -p "Berapa banyak core yang mau kamu pake buat Mining Pool? (1-${CPU_CORES}, default: 1): " pool_cores
-pool_cores=${pool_cores:-1}
-
-# Mengunduh software mining jika diperlukan
-mkdir -p $MINER_DIR
-cd $MINER_DIR
-wget "$MINING_SOFTWARE_URL" -O iniminer-linux-x64
-
-# Mengecek apakah file berhasil diunduh
-if [ $? -eq 0 ]; then
-    echo -e "${GREEN}Perangkat lunak berhasil diunduh!${NC}"
-else
-    echo -e "${RED}Gagal ngunduh perangkat lunak!${NC}"
-    exit 1
-fi
-
-# Memberikan izin eksekusi pada file
-chmod +x iniminer-linux-x64
-
-# Memulai Mining Pool dengan systemd (tidak di dalam screen)
-echo -e "${BLUE}Memulai Mining Pool dengan $pool_cores core CPU...${NC}"
-
-# Membuat unit systemd untuk Mining Pool
-echo -e "[Unit]
-Description=Mining Pool Service
-
-After=network.target
-
-[Service]
-ExecStart=$MINER_DIR/iniminer-linux-x64 --pool stratum+tcp://$WALLET_ADDRESS.$WORKER_NAME@$POOL_ADDRESS
-WorkingDirectory=$MINER_DIR
-Restart=always
-User=root
-
-[Install]
-WantedBy=multi-user.target" | sudo tee /etc/systemd/system/mining-pool.service
-
-# Mengaktifkan dan memulai service Mining Pool
-sudo systemctl daemon-reload
-sudo systemctl enable mining-pool.service
-sudo systemctl start mining-pool.service
-
-# Menampilkan log Mining Pool selama 5 detik
-echo -e "${BLUE}Menampilkan log Mining Pool selama 5 detik...${NC}"
-sudo journalctl -u mining-pool.service -f &
-
-# Memberikan waktu 5 detik untuk melihat log
-sleep 5
-
-# Menghentikan log mining pool
-kill $!
-
-# Solo Mining akan dijalankan dalam sesi screen terpisah
-echo -e "${GREEN}Sekarang kita masuk ke sesi 'initverse' untuk Solo Mining...${NC}"
-
-# Membuat sesi screen untuk Solo Mining
-screen -dmS initverse bash -c "
-    # Periksa apakah wallet address sudah diset, jika belum minta input dari user
-    if [[ -z '$WALLET_ADDRESS' ]]; then
-        echo -e '${RED}Alamat wallet belum diset, silakan masukkan alamat wallet untuk Solo Mining!${NC}'
-        read -p 'Masukkan alamat wallet untuk Solo Mining (contoh: 0x...): ' WALLET_ADDRESS
-    else
-        echo -e '${GREEN}Alamat wallet sudah diset: $WALLET_ADDRESS${NC}'
-    fi
-
-    # Menampilkan jumlah CPU core yang tersedia
-    echo -e '${CYAN}Total core CPU yang tersedia: $CPU_CORES. Banyak banget kan?${NC}'
-
-    # Meminta input jumlah core CPU untuk Solo Mining
-    read -p 'Berapa banyak core yang mau kamu pake buat Solo Mining? (1-${CPU_CORES}, default: 1): ' solo_cores
-    solo_cores=${solo_cores:-1}
-
-    # Setup etherbase untuk Solo Mining
-    echo 'miner.setEtherbase(\"$WALLET_ADDRESS\")' > /root/ini-miner/data/geth/console
-    echo -e '${YELLOW}Setting up mining untuk Solo Mining...${NC}'
-
-    # Setup mining untuk Solo Mining
-    echo 'miner.start('$solo_cores')'  # Mining dengan jumlah core yang dipilih
-"
-
-# Menampilkan informasi bahwa sesi 'initverse' sudah dijalankan
-echo -e "${GREEN}Setup Solo Mining selesai dan berjalan di sesi 'initverse'!${NC}"
-
-# Pindah ke sesi `screen` otomatis
-screen -r initverse
-
-# Menu untuk pilihan
-while true; do
-    echo -e "${CYAN}Apa yang ingin Anda lakukan?${NC}"
-    echo "1. Hentikan Solo Mining dan Mining Pool"
-    echo "2. Hentikan dan hapus semua file (Solo Mining dan Mining Pool)"
-    echo "3. Keluar (Tidak menutup sesi screen, mining tetap berjalan)"
-
-    read -p "Pilih opsi (1-3): " option
-
-    case $option in
-        1)
-            # Menghentikan Solo Mining dan Mining Pool
-            screen -S initverse -X quit
-            sudo systemctl stop mining-pool.service
-            sudo systemctl disable mining-pool.service
-            echo -e "${GREEN}Solo Mining dan Mining Pool dihentikan!${NC}"
-            ;;
-        2)
-            # Menghentikan dan menghapus semua file (Solo Mining, Pool Mining, dan screen)
-            screen -S initverse -X quit
-            sudo systemctl stop mining-pool.service
-            sudo systemctl disable mining-pool.service
-            sudo rm -rf $MINER_DIR
-            sudo rm /etc/systemd/system/mining-pool.service
-            sudo systemctl daemon-reload
-            echo -e "${GREEN}Semua file dan layanan telah dihapus!${NC}"
-            exit 0  # Keluar dari skrip dan kembali ke SSH
-            ;;
-        3)
-            # Keluar dari skrip tanpa menutup sesi screen
-            echo -e "${GREEN}Keluar dari skrip, tetapi sesi 'initverse' tetap berjalan.${NC}"
-            exit 0
-            ;;
-        *)
-            echo -e "${RED}Opsi tidak valid. Silakan pilih antara 1 hingga 3.${NC}"
-            ;;
-    esac
-    # Menampilkan kembali menu setelah aksi selesai
-    echo -e "${CYAN}Kembali ke menu utama...${NC}"
-done
+# Start the script
+main_menu
