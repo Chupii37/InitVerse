@@ -46,8 +46,8 @@ while true; do
 done
 
 # Meminta input untuk nama worker
-read -p "Masukkan worker name (default: Workerr001): " worker_name
-worker_name="${worker_name:-Workerr001}"
+read -p "Masukkan worker name (default: Worker001): " worker_name
+worker_name="${worker_name:-Worker001}"
 echo -e "${GREEN}Worker name yang dipilih: $worker_name. Keren kan?${NC}"
 
 # Membuat folder dan mengunduh perangkat lunak mining
