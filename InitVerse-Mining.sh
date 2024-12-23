@@ -97,8 +97,6 @@ WorkingDirectory=/$USER/ini-miner
 Restart=always
 User=$USER
 
-
-
 [Install]
 WantedBy=multi-user.target" | sudo tee /etc/systemd/system/mining-pool.service
 
@@ -165,11 +163,11 @@ echo -e "${YELLOW}Menjalankan geth untuk Solo Mining...${NC}"
 echo -e "${YELLOW}Setting up Solo Mining dengan wallet address $WALLET_ADDRESS...${NC}"
 
 # Membuat file untuk setup etherbase dan start mining
-echo "miner.setEtherbase(\"$WALLET_ADDRESS\")" > solo_mining_cmd.sh
-echo "miner.start($CPU_CORES)" >> solo_mining_cmd.sh
+echo "miner.setEtherbase(\"$WALLET_ADDRESS\")" > solo_mining_cmd.js
+echo "miner.start($CPU_CORES)" >> solo_mining_cmd.js
 
 # Memberikan izin eksekusi pada file perintah solo mining
-chmod +x solo_mining_cmd.sh
+chmod +x solo_mining_cmd.js
 
 # Membuat unit systemd untuk Solo Mining
 echo -e "[Unit]
@@ -177,11 +175,10 @@ Description=Solo Mining Service
 After=network.target
 
 [Service]
-ExecStart=/bin/bash /$USER/solo-mining/solo_mining_cmd.sh
+ExecStart=/bin/bash /$USER/solo-mining/solo_mining_cmd.js
 WorkingDirectory=/$USER/solo-mining
 Restart=always
 User=$USER
-
 
 [Install]
 WantedBy=multi-user.target" | sudo tee /etc/systemd/system/solo-mining.service
