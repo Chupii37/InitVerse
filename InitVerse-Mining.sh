@@ -81,14 +81,24 @@ else
     exit 1
 fi
 
-# Install symcl, biar makin kece
+# Mencoba menginstall symcl jika tersedia di repositori atau mengunduh dari sumber lain
 echo -e "${BLUE}Sekarang install symcl, biar makin mantap!${NC}"
+
+# Cek apakah symcl tersedia di repositori atau kita perlu install dari sumber lain
 sudo apt-get install symcl -y
-if [ $? -eq 0 ]; then
-    echo -e "${GREEN}Symcl terpasang dengan sukses!${NC}"
+if [ $? -ne 0 ]; then
+    echo -e "${RED}Paket symcl tidak ditemukan di repositori. Mencoba mengunduhnya secara manual...${NC}"
+    # Coba mengunduh symcl atau menggunakan pip jika symcl adalah paket Python
+    echo -e "${CYAN}Mencoba mengunduh dan menginstal symcl menggunakan pip...${NC}"
+    pip install symcl
+    if [ $? -eq 0 ]; then
+        echo -e "${GREEN}Symcl berhasil diinstal menggunakan pip!${NC}"
+    else
+        echo -e "${RED}Gagal menginstal symcl menggunakan pip!${NC}"
+        exit 1
+    fi
 else
-    echo -e "${RED}Gagal install symcl. Waduh, ada yang error nih!${NC}"
-    exit 1
+    echo -e "${GREEN}Symcl terpasang dengan sukses!${NC}"
 fi
 
 # Mengonfigurasi Mining Pool
