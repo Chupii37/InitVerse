@@ -89,7 +89,7 @@ main_menu() {
             1) setup_pool_mining ; break ;;
             2) setup_solo_mining ; break ;;
             3) check_requirements ; break ;;
-            4) echo -e "${GREEN}Exiting...${NC}"; exit 0 ; break ;;
+            4) echo -e "${GREEN}Exiting...${NC}"; exit 0 ;;  # Exit program after choice
         esac
     done
 }
@@ -97,13 +97,13 @@ main_menu() {
 # Function to setup pool mining
 setup_pool_mining() {
     echo -e "${YELLOW}Setting up Pool Mining...${NC}"
-    # Additional pool mining setup logic
+    # Additional pool mining setup logic (you can add more here)
 }
 
 # Function to setup solo mining
 setup_solo_mining() {
     echo -e "${YELLOW}Setting up Solo Mining...${NC}"
-    # Additional solo mining setup logic
+    # Additional solo mining setup logic (you can add more here)
 }
 
 # Start the script
