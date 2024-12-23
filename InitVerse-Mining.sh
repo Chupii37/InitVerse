@@ -53,52 +53,30 @@ node -v
 echo -e "${BLUE}Versi NPM yang terpasang:${NC}"
 npm -v
 
-# Cek apakah python3.10 tersedia di sistem
-echo -e "${BLUE}Cek apakah Python 3.10 tersedia...${NC}"
-python_version=$(python3.10 --version 2>/dev/null)
-
-if [[ $? -eq 0 ]]; then
-    echo -e "${GREEN}Python 3.10 terdeteksi! Lanjutkan dengan instalasi venv.${NC}"
-else
-    echo -e "${RED}Python 3.10 gak ditemukan! Mencoba versi lain...${NC}"
-    # Cek apakah python3 ada versi lainnya
-    python_version=$(python3 --version 2>/dev/null)
-    if [[ $? -eq 0 ]]; then
-        echo -e "${GREEN}Python 3.x ditemukan: $python_version. Menggunakan versi ini untuk venv.${NC}"
-    else
-        echo -e "${RED}Gagal menemukan Python! Pastikan Python 3 terinstal!${NC}"
-        exit 1
-    fi
-fi
-
-# Instalasi python3-venv sesuai versi Python yang ada
-echo -e "${BLUE}Menginstal python3-venv untuk versi Python yang terdeteksi...${NC}"
-sudo apt install python3-venv -y
+# Pasang Python 3.10 dan venv buat projek-projek keren
+echo -e "${BLUE}Sekarang kita pasang python3.10-venv biar bisa coding Python!${NC}"
+sudo apt install python3.10-venv -y
 if [ $? -eq 0 ]; then
-    echo -e "${GREEN}Python venv berhasil terinstal!${NC}"
+    echo -e "${GREEN}Python 3.10-venv terpasang dengan sukses!${NC}"
 else
-    echo -e "${RED}Gagal menginstal Python venv! Ada yang ngaco nih...${NC}"
+    echo -e "${RED}Gagal pasang Python 3.10-venv! Ada yang ngaco nih...${NC}"
     exit 1
 fi
 
-# Mencoba menginstall symcl jika tersedia di repositori atau mengunduh dari sumber lain
-echo -e "${BLUE}Sekarang install symcl, biar makin mantap!${NC}"
-
-# Cek apakah symcl tersedia di repositori atau kita perlu install dari sumber lain
-sudo apt-get install symcl -y
-if [ $? -ne 0 ]; then
-    echo -e "${RED}Paket symcl tidak ditemukan di repositori. Mencoba mengunduhnya secara manual...${NC}"
-    # Coba mengunduh symcl atau menggunakan pip jika symcl adalah paket Python
-    echo -e "${CYAN}Mencoba mengunduh dan menginstal symcl menggunakan pip...${NC}"
-    pip install symcl
+# Mengecek apakah systemctl terinstal
+echo -e "${BLUE}Sekarang kita cek apakah systemctl sudah terpasang...${NC}"
+if ! command -v systemctl &> /dev/null
+then
+    echo -e "${YELLOW}Systemctl tidak ditemukan, yuk kita pasang!${NC}"
+    sudo apt install systemd -y
     if [ $? -eq 0 ]; then
-        echo -e "${GREEN}Symcl berhasil diinstal menggunakan pip!${NC}"
+        echo -e "${GREEN}Systemctl berhasil dipasang!${NC}"
     else
-        echo -e "${RED}Gagal menginstal symcl menggunakan pip!${NC}"
+        echo -e "${RED}Gagal memasang systemctl. Ada yang salah nih!${NC}"
         exit 1
     fi
 else
-    echo -e "${GREEN}Symcl terpasang dengan sukses!${NC}"
+    echo -e "${GREEN}Systemctl sudah terpasang!${NC}"
 fi
 
 # Mengonfigurasi Mining Pool
