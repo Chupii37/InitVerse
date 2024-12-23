@@ -14,10 +14,9 @@ WALLET_ADDRESS=""
 WORKER_NAME="Worker001"
 CPU_CORES=$(nproc)
 MINING_SOFTWARE_URL="https://github.com/Project-InitVerse/ini-miner/releases/download/v1.0.0/iniminer-linux-x64"
-FULL_NODE_URL="https://github.com/Project-InitVerse/ini-chain/archive/refs/tags/v1.0.0.tar.gz"
 POOL_ADDRESS="pool-core-testnet.inichain.com:32672"
 
-# Memperbarui sistem, biar gak ketinggalan zaman
+# Warna dan tampilan yang menyenangkan
 echo -e "${BLUE}Yo, kita lagi ngupdate sistem nih! Biar gak ketinggalan zaman...${NC}"
 sudo apt-get update && sudo apt-get upgrade -y
 if [ $? -eq 0 ]; then
@@ -27,39 +26,30 @@ else
     exit 1
 fi
 
-# Install systemctl jika belum ada
-if ! command -v systemctl &> /dev/null; then
-    echo -e "${BLUE}Systemd belum terpasang. Sekarang kita pasang!${NC}"
-    sudo apt-get install systemd -y
-    if [ $? -eq 0 ]; then
-        echo -e "${GREEN}Systemd berhasil dipasang!${NC}"
-    else
-        echo -e "${RED}Gagal pasang Systemd. Ada yang error nih!${NC}"
-        exit 1
-    fi
-fi
-
-# Mengonfigurasi Mining Pool
-echo -e "${BLUE}Yuk mulai konfigurasi Mining Pool...${NC}"
-
-# Meminta input untuk reward address dan memastikan address valid
+# Memastikan alamat wallet sudah ada atau meminta input jika kosong
 while true; do
-    read -p "Masukkan reward address (contoh: 0x...): " WALLET_ADDRESS
     if [[ -z "$WALLET_ADDRESS" ]]; then
-        echo -e "${RED}Reward address gak boleh kosong, ya! Masukkan yang bener dong!${NC}"
+        echo -e "${RED}Reward address belum diset. Silakan masukkan alamat wallet untuk Solo Mining!${NC}"
+        read -p "Masukkan alamat wallet (contoh: 0x...): " WALLET_ADDRESS
     else
-        echo -e "${GREEN}Reward address diterima: $WALLET_ADDRESS. Mantap!${NC}"
+        echo -e "${GREEN}Reward address sudah diset: $WALLET_ADDRESS${NC}"
         break
     fi
 done
 
-# Meminta input untuk nama worker
-read -p "Masukkan worker name (default: Worker001): " WORKER_NAME
+# Meminta input nama worker
+read -p "Masukkan nama worker (default: Worker001): " WORKER_NAME
 WORKER_NAME="${WORKER_NAME:-Worker001}"
-echo -e "${GREEN}Worker name yang dipilih: $WORKER_NAME. Keren kan?${NC}"
+echo -e "${GREEN}Worker name yang dipilih: $WORKER_NAME${NC}"
 
-# Membuat folder dan mengunduh perangkat lunak mining
-echo -e "${YELLOW}Downloading mining software...${NC}"
+# Mengecek jumlah core CPU yang tersedia
+echo -e "${CYAN}Total core CPU yang tersedia: $CPU_CORES. Banyak banget kan?${NC}"
+
+# Meminta input jumlah core CPU untuk Mining Pool
+read -p "Berapa banyak core yang mau kamu pake buat Mining Pool? (1-${CPU_CORES}, default: 1): " pool_cores
+pool_cores=${pool_cores:-1}
+
+# Mengunduh software mining jika diperlukan
 MINER_DIR="/root/ini-miner"
 mkdir -p $MINER_DIR
 cd $MINER_DIR
@@ -67,24 +57,16 @@ wget "$MINING_SOFTWARE_URL" -O iniminer-linux-x64
 
 # Mengecek apakah file berhasil diunduh
 if [ $? -eq 0 ]; then
-    echo -e "${GREEN}Perangkat lunak berhasil diunduh! Gokil!${NC}"
+    echo -e "${GREEN}Perangkat lunak berhasil diunduh!${NC}"
 else
-    echo -e "${RED}Gagal ngunduh perangkat lunak! Wah, ada yang salah nih!${NC}"
+    echo -e "${RED}Gagal ngunduh perangkat lunak!${NC}"
     exit 1
 fi
 
 # Memberikan izin eksekusi pada file
 chmod +x iniminer-linux-x64
 
-# Menampilkan jumlah CPU core yang tersedia
-echo -e "${CYAN}Total core CPU yang tersedia: $CPU_CORES. Banyak banget kan?${NC}"
-
-# Menanyakan jumlah core CPU yang ingin digunakan untuk Mining Pool
-echo -e "${CYAN}Berapa banyak core yang mau kamu pake buat Mining Pool? (1-${CPU_CORES}, default: 1):${NC}"
-read pool_cores
-pool_cores=${pool_cores:-1}
-
-# Memulai Mining Pool dengan jumlah core yang dipilih
+# Setup mining pool dengan jumlah core yang dipilih
 echo -e "${BLUE}Memulai Mining Pool dengan $pool_cores core CPU...${NC}"
 MINING_POOL_CMD="./iniminer-linux-x64 --pool stratum+tcp://$WALLET_ADDRESS.$WORKER_NAME@$POOL_ADDRESS"
 for ((i=0; i<pool_cores; i++)); do
@@ -116,52 +98,40 @@ sudo systemctl start mining-pool.service
 
 # Menampilkan log Mining Pool selama 5 detik
 echo -e "${BLUE}Menampilkan log Mining Pool selama 5 detik...${NC}"
-sudo journalctl -u mining-pool.service -f & 
+sudo journalctl -u mining-pool.service -f &
 sleep 5
 kill $!
 
-# Membuat sesi `screen` untuk Solo Mining setelah log Mining Pool selesai
-echo -e "${GREEN}Membuat sesi screen 'initverse' untuk Solo Mining...${NC}"
+# Solo Mining akan dijalankan dalam sesi screen terpisah
+echo -e "${GREEN}Mining Pool selesai! Sekarang kita masuk ke sesi 'initverse' untuk Solo Mining...${NC}"
+
+# Membuat sesi screen untuk Solo Mining
 screen -dmS initverse bash -c "
-    # Mengonfigurasi Solo Mining
-    echo -e '${BLUE}Sekarang kita setup Solo Mining!${NC}'
-
-    # Meminta input untuk alamat wallet Solo Mining
-    while true; do
+    # Periksa apakah wallet address sudah diset, jika belum minta input dari user
+    if [[ -z '$WALLET_ADDRESS' ]]; then
+        echo -e '${RED}Alamat wallet belum diset, silakan masukkan alamat wallet untuk Solo Mining!${NC}'
         read -p 'Masukkan alamat wallet untuk Solo Mining (contoh: 0x...): ' WALLET_ADDRESS
-        if [[ -z \"\$WALLET_ADDRESS\" ]]; then
-            echo -e '${RED}Alamat wallet untuk Solo Mining gak boleh kosong, ya!${NC}'
-        else
-            echo -e '${GREEN}Alamat wallet diterima: \$WALLET_ADDRESS${NC}'
-            break
-        fi
-    done
+    else
+        echo -e '${GREEN}Alamat wallet sudah diset: $WALLET_ADDRESS${NC}'
+    fi
 
-    # Download dan setup full node untuk Solo Mining
-    echo -e '${YELLOW}Downloading full node untuk Solo Mining...${NC}'
-    wget '$FULL_NODE_URL' -O ini-chain.tar.gz
-    tar -xzf ini-chain.tar.gz
+    # Menampilkan jumlah CPU core yang tersedia
+    echo -e '${CYAN}Total core CPU yang tersedia: $CPU_CORES. Banyak banget kan?${NC}'
 
-    # Download geth
-    wget https://github.com/Project-InitVerse/ini-chain/releases/download/v1.0.0/geth-linux-x64
-    chmod +x geth-linux-x64
-
-    # Mulai node untuk Solo Mining
-    echo -e '${GREEN}Starting full node untuk Solo Mining...${NC}'
-    ./geth-linux-x64 --datadir data --http.api='eth,admin,miner,net,web3,personal' --allow-insecure-unlock --testnet console &
-
-    # Setup mining untuk Solo Mining
-    echo -e '${YELLOW}Setting up mining untuk Solo Mining...${NC}'
-    echo 'miner.setEtherbase(\"\$WALLET_ADDRESS\")'
-
-    # Menanyakan jumlah core CPU yang ingin digunakan untuk Solo Mining
-    echo -e '${CYAN}Berapa banyak core yang mau kamu pake buat Solo Mining? (1-${CPU_CORES}, default: 1):${NC}'
-    read solo_cores
+    # Meminta input jumlah core CPU untuk Solo Mining
+    read -p 'Berapa banyak core yang mau kamu pake buat Solo Mining? (1-${CPU_CORES}, default: 1): ' solo_cores
     solo_cores=${solo_cores:-1}
 
-    echo 'miner.start(\$solo_cores)'
+    # Setup etherbase untuk Solo Mining
+    echo 'miner.setEtherbase(\"$WALLET_ADDRESS\")' > /root/ini-miner/data/geth/console
+    echo -e '${YELLOW}Setting up mining untuk Solo Mining...${NC}'
+
+    # Setup mining untuk Solo Mining
+    echo 'miner.start('$solo_cores')'  # Mining dengan jumlah core yang dipilih
 "
 
-# Pindah ke sesi `screen` secara otomatis
-echo -e "${GREEN}Sekarang kamu berada di sesi screen 'initverse' untuk Solo Mining!${NC}"
+# Menampilkan informasi bahwa sesi 'initverse' sudah dijalankan
+echo -e "${GREEN}Setup Solo Mining selesai dan berjalan di sesi 'initverse'!${NC}"
+
+# Pindah ke sesi `screen` otomatis
 screen -r initverse
