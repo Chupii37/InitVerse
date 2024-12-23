@@ -53,13 +53,31 @@ node -v
 echo -e "${BLUE}Versi NPM yang terpasang:${NC}"
 npm -v
 
-# Pasang Python 3.10 dan venv buat projek-projek keren
-echo -e "${BLUE}Sekarang kita pasang python3.10-venv biar bisa coding Python!${NC}"
-sudo apt install python3.10-venv -y
-if [ $? -eq 0 ]; then
-    echo -e "${GREEN}Python 3.10-venv terpasang dengan sukses!${NC}"
+# Mengecek versi Python yang tersedia
+echo -e "${BLUE}Cek versi Python yang tersedia di sistem...${NC}"
+PYTHON_VERSION=$(python3 --version 2>&1)
+
+# Mengecek apakah Python 3 sudah terinstal
+if [[ "$PYTHON_VERSION" =~ "Python 3" ]]; then
+    echo -e "${GREEN}Python 3 sudah terpasang! Versi yang terpasang: $PYTHON_VERSION${NC}"
 else
-    echo -e "${RED}Gagal pasang Python 3.10-venv! Ada yang ngaco nih...${NC}"
+    echo -e "${RED}Python 3 belum terpasang! Ayo kita install...${NC}"
+    sudo apt install python3 -y
+    if [ $? -eq 0 ]; then
+        echo -e "${GREEN}Python 3 berhasil dipasang!${NC}"
+    else
+        echo -e "${RED}Gagal pasang Python 3!${NC}"
+        exit 1
+    fi
+fi
+
+# Menginstal python3-venv sesuai versi Python yang ada
+echo -e "${BLUE}Mencoba menginstal python3-venv untuk versi Python yang ada...${NC}"
+sudo apt install python3-venv -y
+if [ $? -eq 0 ]; then
+    echo -e "${GREEN}python3-venv berhasil terpasang!${NC}"
+else
+    echo -e "${RED}Gagal pasang python3-venv! Ada yang ngaco nih...${NC}"
     exit 1
 fi
 
