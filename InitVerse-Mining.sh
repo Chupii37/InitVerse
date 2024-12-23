@@ -149,14 +149,19 @@ main_menu() {
         echo -e "${YELLOW}Please select an option (1-4):${NC}"
         read choice
         
-        case $choice in
-            1) setup_pool_mining ;;
-            2) setup_solo_mining ;;
-            3) check_requirements ;;
-            4) echo -e "${GREEN}Exiting...${NC}"; exit 0 ;;
-            *) echo -e "${RED}Invalid option${NC}"; sleep 2 ;;
-        esac
+        # Make sure the choice is a valid option (1-4)
+        if [[ "$choice" =~ ^[1-4]$ ]]; then
+            case $choice in
+                1) setup_pool_mining ;;
+                2) setup_solo_mining ;;
+                3) check_requirements ;;
+                4) echo -e "${GREEN}Exiting...${NC}"; exit 0 ;;
+            esac
+        else
+            echo -e "${RED}Invalid option, please choose between 1 and 4.${NC}"
+        fi
         
+        # Allow user to press Enter to return to main menu
         if [ "$choice" != "4" ]; then
             echo -e "\n${YELLOW}Press Enter to return to main menu...${NC}"
             read
