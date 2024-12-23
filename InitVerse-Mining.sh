@@ -1,28 +1,118 @@
 #!/bin/bash
 
-# Warna-warna kece untuk mempercantik tampilan
+# Colors
 RED='\033[0;31m'
 GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
+PURPLE='\033[0;35m'
 CYAN='\033[0;36m'
-YELLOW='\033[0;33m'
-MAGENTA='\033[0;35m'
-NC='\033[0m' # Normal tanpa warna
+NC='\033[0m' # No Color
 
 # Global variables
 WALLET_ADDRESS=""
 WORKER_NAME="Worker001"
 CPU_CORES=$(nproc)
 MINING_SOFTWARE_URL="https://github.com/Project-InitVerse/ini-miner/releases/download/v1.0.0/iniminer-linux-x64"
+FULL_NODE_URL="https://github.com/Project-InitVerse/ini-chain/archive/refs/tags/v1.0.0.tar.gz"
 POOL_ADDRESS="pool-core-testnet.inichain.com:32672"
-MINER_DIR="/root/ini-miner"
-FULL_NODE_URL="https://github.com/Project-InitVerse/ini-chain/releases/download/v1.0.0/ini-chain.tar.gz"
 
-# Function to print header
+# Function to print colored header
 print_header() {
-    echo -e "${CYAN}=================================================${NC}"
-    echo -e "${MAGENTA}       InitVerse Setup${NC}"  # Pesan sambutan baru
-    echo -e "${CYAN}=================================================${NC}"
+    echo -e "${PURPLE}=================================================${NC}"
+    echo -e "${CYAN}             InitVerse Mining Setup${NC}"
+    echo -e "${PURPLE}=================================================${NC}"
+}
+
+# Function to validate wallet address
+validate_wallet() {
+    if [[ ! $1 =~ ^0x[a-fA-F0-9]{40}$ ]]; then
+        echo -e "${RED}Invalid wallet address format${NC}"
+        return 1
+    fi
+    return 0
+}
+
+# Function to set up mining pool
+setup_pool_mining() {
+    echo -e "${YELLOW}Setting up Pool Mining...${NC}"
+    
+    # Get wallet address if not already set
+    while [ -z "$WALLET_ADDRESS" ] || ! validate_wallet "$WALLET_ADDRESS"; do
+        echo -e "${CYAN}Enter your wallet address (0x...):${NC}"
+        read WALLET_ADDRESS
+    done
+    
+    # Get worker name
+    echo -e "${CYAN}Enter worker name (default: Worker001):${NC}"
+    read input_worker
+    WORKER_NAME=${input_worker:-$WORKER_NAME}
+    
+    # Create directory and download mining software
+    mkdir -p ini-miner && cd ini-miner
+    
+    # Download and extract mining software
+    echo -e "${YELLOW}Downloading mining software...${NC}"
+    wget "https://github.com/Project-InitVerse/ini-miner/releases/download/v1.0.0/iniminer-linux-x64" -O iniminer-linux-x64
+    chmod +x iniminer-linux-x64
+    
+    # Check if executable exists
+    if [ ! -f "./iniminer-linux-x64" ]; then
+        echo -e "${RED}Error: Mining software not found${NC}"
+        return 1
+    fi
+    
+    # Set up mining command
+    MINING_CMD="./iniminer-linux-x64 --pool stratum+tcp://${WALLET_ADDRESS}.${WORKER_NAME}@${POOL_ADDRESS}"
+    
+    # Get number of CPU cores to use
+    echo -e "${CYAN}Enter number of CPU cores to use (1-${CPU_CORES}, default: 1):${NC}"
+    read cores
+    cores=${cores:-1}
+    
+    for ((i=0; i<cores; i++)); do
+        MINING_CMD+=" --cpu-devices $i"
+    done
+    
+    # Start mining
+    echo -e "${GREEN}Starting mining with command:${NC}"
+    echo -e "${BLUE}$MINING_CMD${NC}"
+    eval "$MINING_CMD"
+}
+
+# Function to set up solo mining
+setup_solo_mining() {
+    echo -e "${YELLOW}Setting up Solo Mining...${NC}"
+    
+    # Get wallet address if not already set
+    while [ -z "$WALLET_ADDRESS" ] || ! validate_wallet "$WALLET_ADDRESS"; do
+        echo -e "${CYAN}Enter your wallet address (0x...):${NC}"
+        read WALLET_ADDRESS
+    done
+    
+    # Download and set up full node
+    echo -e "${YELLOW}Downloading full node...${NC}"
+    wget "$FULL_NODE_URL" -O ini-chain.tar.gz
+    tar -xzf ini-chain.tar.gz
+    
+    # Download Geth
+    wget https://github.com/Project-InitVerse/ini-chain/releases/download/v1.0.0/geth-linux-x64
+    chmod +x geth-linux-x64
+    
+    # Start node
+    echo -e "${GREEN}Starting full node...${NC}"
+    ./geth-linux-x64 --datadir data --http.api="eth,admin,miner,net,web3,personal" --allow-insecure-unlock --testnet console
+    
+    # Set up mining
+    echo -e "${YELLOW}Setting up mining...${NC}"
+    echo "miner.setEtherbase(\"$WALLET_ADDRESS\")"
+    
+    # Get number of CPU cores to use
+    echo -e "${CYAN}Enter number of CPU cores to use (1-${CPU_CORES}, default: 1):${NC}"
+    read cores
+    cores=${cores:-1}
+    
+    echo "miner.start($cores)"
 }
 
 # Function to check system requirements
@@ -53,68 +143,32 @@ check_requirements() {
     done
 }
 
-# Function to handle user input more robustly
-get_user_input() {
-    local prompt=$1
-    local valid_input_pattern=$2
-    local input=""
-    
-    while true; do
-        echo -e "$prompt"
-        read -r input
-        if [[ "$input" =~ $valid_input_pattern ]]; then
-            echo "$input"
-            break
-        else
-            echo -e "${RED}Invalid input. Please try again.${NC}"
-        fi
-    done
-}
-
 # Main menu function
 main_menu() {
     while true; do
+        clear
         print_header
         echo -e "${CYAN}1. Setup Pool Mining${NC}"
         echo -e "${CYAN}2. Setup Solo Mining${NC}"
         echo -e "${CYAN}3. Check System Requirements${NC}"
         echo -e "${CYAN}4. Exit${NC}"
         echo -e "${PURPLE}=================================================${NC}"
+        echo -e "${YELLOW}Please select an option (1-4):${NC}"
+        read choice
         
-        # Using the get_user_input function to ensure only valid options are accepted
-        choice=$(get_user_input "Please select an option (1-4):" "^[1-4]$")
-        
-        # Handle user choice
         case $choice in
-            1) 
-                setup_pool_mining
-                read -p "Press [Enter] to return to the main menu..." ;;
-            2) 
-                setup_solo_mining
-                read -p "Press [Enter] to return to the main menu..." ;;
-            3) 
-                check_requirements
-                read -p "Press [Enter] to return to the main menu..." ;;
-            4) 
-                echo -e "${GREEN}Exiting...${NC}"
-                exit 0 ;;  # Exit the program immediately
-            *) 
-                echo -e "${RED}Invalid choice. Please select between 1 and 4.${NC}"
-                read -p "Press [Enter] to try again..." ;;
+            1) setup_pool_mining ;;
+            2) setup_solo_mining ;;
+            3) check_requirements ;;
+            4) echo -e "${GREEN}Exiting...${NC}"; exit 0 ;;
+            *) echo -e "${RED}Invalid option${NC}"; sleep 2 ;;
         esac
+        
+        if [ "$choice" != "4" ]; then
+            echo -e "\n${YELLOW}Press Enter to return to main menu...${NC}"
+            read
+        fi
     done
-}
-
-# Function to setup pool mining
-setup_pool_mining() {
-    echo -e "${YELLOW}Setting up Pool Mining...${NC}"
-    # Additional pool mining setup logic (you can add more here)
-}
-
-# Function to setup solo mining
-setup_solo_mining() {
-    echo -e "${YELLOW}Setting up Solo Mining...${NC}"
-    # Additional solo mining setup logic (you can add more here)
 }
 
 # Start the script
