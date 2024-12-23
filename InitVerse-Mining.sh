@@ -61,12 +61,12 @@ setup_pool_mining() {
     # Get wallet address if not already set
     while [ -z "$WALLET_ADDRESS" ] || ! validate_wallet "$WALLET_ADDRESS"; do
         echo -e "${CYAN}Enter your wallet address (0x...):${NC}"
-        read WALLET_ADDRESS
+        read -e WALLET_ADDRESS
     done
     
     # Get worker name
     echo -e "${CYAN}Enter worker name (default: Worker001):${NC}"
-    read input_worker
+    read -e input_worker
     WORKER_NAME=${input_worker:-$WORKER_NAME}
     
     # Create directory and download mining software
@@ -88,7 +88,7 @@ setup_pool_mining() {
     
     # Get number of CPU cores to use
     echo -e "${CYAN}Enter number of CPU cores to use (1-${CPU_CORES}, default: 1):${NC}"
-    read cores
+    read -e cores
     cores=${cores:-1}
     
     for ((i=0; i<cores; i++)); do
@@ -108,7 +108,7 @@ setup_solo_mining() {
     # Get wallet address if not already set
     while [ -z "$WALLET_ADDRESS" ] || ! validate_wallet "$WALLET_ADDRESS"; do
         echo -e "${CYAN}Enter your wallet address (0x...):${NC}"
-        read WALLET_ADDRESS
+        read -e WALLET_ADDRESS
     done
     
     # Download and set up full node
@@ -130,7 +130,7 @@ setup_solo_mining() {
     
     # Get number of CPU cores to use
     echo -e "${CYAN}Enter number of CPU cores to use (1-${CPU_CORES}, default: 1):${NC}"
-    read cores
+    read -e cores
     cores=${cores:-1}
     
     screen -S solo_mining_session -X stuff "miner.start($cores)\n"
@@ -147,7 +147,7 @@ main_menu() {
         echo -e "${CYAN}4. Exit${NC}"
         echo -e "${PURPLE}=================================================${NC}"
         echo -e "${YELLOW}Please select an option (1-4):${NC}"
-        read choice
+        read -e choice
         
         # Debugging: Show the value of $choice
         echo "You selected: $choice"
