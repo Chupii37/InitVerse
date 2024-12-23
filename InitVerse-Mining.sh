@@ -149,6 +149,9 @@ main_menu() {
         echo -e "${YELLOW}Please select an option (1-4):${NC}"
         read choice
         
+        # Debugging: Show the value of $choice
+        echo "You selected: $choice"
+        
         # Make sure the choice is a valid option (1-4)
         if [[ "$choice" =~ ^[1-4]$ ]]; then
             case $choice in
