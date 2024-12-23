@@ -52,8 +52,9 @@ echo -e "${GREEN}Worker name yang dipilih: $worker_name. Keren kan?${NC}"
 
 # Membuat folder dan mengunduh perangkat lunak mining
 echo -e "${YELLOW}Downloading mining software...${NC}"
-mkdir -p ~/ini-miner
-cd ~/ini-miner
+MINER_DIR="/root/ini-miner"
+mkdir -p $MINER_DIR
+cd $MINER_DIR
 wget "https://github.com/Project-InitVerse/ini-miner/releases/download/v1.0.0/iniminer-linux-x64" -O iniminer-linux-x64
 
 # Mengecek apakah file berhasil diunduh
@@ -92,10 +93,10 @@ Description=Mining Pool Service
 After=network.target
 
 [Service]
-ExecStart=/$USER/ini-miner/iniminer-linux-x64 --pool stratum+tcp://$reward_address.$worker_name@pool-core-testnet.inichain.com:32672
-WorkingDirectory=/$USER/ini-miner
+ExecStart=$MINER_DIR/iniminer-linux-x64 --pool stratum+tcp://$reward_address.$worker_name@pool-core-testnet.inichain.com:32672
+WorkingDirectory=$MINER_DIR
 Restart=always
-User=$USER
+User=root
 
 [Install]
 WantedBy=multi-user.target" | sudo tee /etc/systemd/system/mining-pool.service
@@ -121,7 +122,7 @@ done
 
 # Membuat folder Solo Mining setelah wallet address dimasukkan
 echo -e "${CYAN}Membuat folder khusus untuk Solo Mining...${NC}"
-SOLO_MINING_DIR=~/solo-mining
+SOLO_MINING_DIR="/root/solo-mining"
 mkdir -p $SOLO_MINING_DIR
 cd $SOLO_MINING_DIR
 
@@ -157,7 +158,7 @@ chmod +x geth-linux-x64
 
 # Menjalankan geth setelah mengunduhnya
 echo -e "${YELLOW}Menjalankan geth untuk Solo Mining...${NC}"
-./geth-linux-x64 --datadir data --http.api="eth,admin,miner,net,web3,personal" --allow-insecure-unlock --testnet console
+./geth-linux-x64 --datadir /root/solo-mining/data --http.api="eth,admin,miner,net,web3,personal" --allow-insecure-unlock --testnet console
 
 # Menyiapkan perintah Solo Mining
 echo -e "${YELLOW}Setting up Solo Mining dengan wallet address $WALLET_ADDRESS...${NC}"
@@ -175,10 +176,10 @@ Description=Solo Mining Service
 After=network.target
 
 [Service]
-ExecStart=/bin/bash /$USER/solo-mining/solo_mining_cmd.js
-WorkingDirectory=/$USER/solo-mining
+ExecStart=/bin/bash /root/solo-mining/solo_mining_cmd.js
+WorkingDirectory=/root/solo-mining
 Restart=always
-User=$USER
+User=root
 
 [Install]
 WantedBy=multi-user.target" | sudo tee /etc/systemd/system/solo-mining.service
