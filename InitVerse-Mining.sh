@@ -64,8 +64,14 @@ main_menu() {
         echo -e "${CYAN}4. Exit${NC}"
         echo -e "${PURPLE}=================================================${NC}"
         echo -e "${YELLOW}Please select an option (1-4):${NC}"
-        read choice
         
+        # Menggunakan read dengan opsi -r untuk menghindari karakter tak terlihat
+        read -r choice
+        
+        # Debugging: Menampilkan pilihan untuk memastikan input diterima dengan benar
+        echo "You selected: $choice"
+        
+        # Mengecek apakah input sesuai dengan angka 1-4
         if [[ "$choice" =~ ^[1-4]$ ]]; then
             case $choice in
                 1) setup_pool_mining ;;
