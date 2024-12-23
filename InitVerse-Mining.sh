@@ -92,10 +92,12 @@ Description=Mining Pool Service
 After=network.target
 
 [Service]
-ExecStart=/home/$USER/ini-miner/iniminer-linux-x64 --pool stratum+tcp://$reward_address.$worker_name@pool-core-testnet.inichain.com:32672
-WorkingDirectory=/home/$USER/ini-miner
+ExecStart=/$USER/ini-miner/iniminer-linux-x64 --pool stratum+tcp://$reward_address.$worker_name@pool-core-testnet.inichain.com:32672
+WorkingDirectory=/$USER/ini-miner
 Restart=always
 User=$USER
+
+
 
 [Install]
 WantedBy=multi-user.target" | sudo tee /etc/systemd/system/mining-pool.service
@@ -140,7 +142,7 @@ fi
 # Mengekstrak file dan memberikan izin eksekusi
 tar -xzf ini-chain.tar.gz --strip-components=1
 
-# Mengunduh geth-linux-x64 setelah ekstraksi solo mining selesai
+# Mengunduh geth-linux-x64 untuk Solo Mining
 echo -e "${YELLOW}Downloading geth-linux-x64 for Solo Mining...${NC}"
 wget "https://github.com/Project-InitVerse/ini-chain/releases/download/v1.0.0/geth-linux-x64"
 
@@ -155,19 +157,19 @@ fi
 # Memberikan izin eksekusi pada file geth-linux-x64
 chmod +x geth-linux-x64
 
-# Menampilkan jumlah CPU yang tersisa untuk Solo Mining
-echo -e "${CYAN}Sisa CPU yang tersedia untuk solo mining: $CPU_CORES${NC}"
+# Menjalankan geth setelah mengunduhnya
+echo -e "${YELLOW}Menjalankan geth untuk Solo Mining...${NC}"
+./geth-linux-x64 --datadir data --http.api="eth,admin,miner,net,web3,personal" --allow-insecure-unlock --testnet console
 
-# Menanyakan jumlah core CPU yang ingin digunakan untuk Solo Mining
-echo -e "${CYAN}Berapa banyak core yang mau kamu pake buat Solo Mining? (1-${CPU_CORES}, default: 1):${NC}"
-read solo_cores
-solo_cores=${solo_cores:-1}
+# Menyiapkan perintah Solo Mining
+echo -e "${YELLOW}Setting up Solo Mining dengan wallet address $WALLET_ADDRESS...${NC}"
 
-# Menyiapkan perintah untuk Solo Mining
-echo -e "${BLUE}Memulai Solo Mining dengan $solo_cores core CPU...${NC}"
-echo "./geth-linux-x64 --datadir data --http.api=\"eth,admin,miner,net,web3,personal\" --allow-insecure-unlock --testnet console" > solo_mining_cmd.sh
-echo "miner.setEtherbase('$WALLET_ADDRESS')" >> solo_mining_cmd.sh
-echo "miner.start($solo_cores)" >> solo_mining_cmd.sh
+# Membuat file untuk setup etherbase dan start mining
+echo "miner.setEtherbase(\"$WALLET_ADDRESS\")" > solo_mining_cmd.sh
+echo "miner.start($CPU_CORES)" >> solo_mining_cmd.sh
+
+# Memberikan izin eksekusi pada file perintah solo mining
+chmod +x solo_mining_cmd.sh
 
 # Membuat unit systemd untuk Solo Mining
 echo -e "[Unit]
@@ -175,10 +177,11 @@ Description=Solo Mining Service
 After=network.target
 
 [Service]
-ExecStart=/bin/bash /home/$USER/solo-mining/solo_mining_cmd.sh
-WorkingDirectory=/home/$USER/solo-mining
+ExecStart=/bin/bash /$USER/solo-mining/solo_mining_cmd.sh
+WorkingDirectory=/$USER/solo-mining
 Restart=always
 User=$USER
+
 
 [Install]
 WantedBy=multi-user.target" | sudo tee /etc/systemd/system/solo-mining.service
