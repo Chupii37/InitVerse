@@ -77,8 +77,7 @@ main_menu() {
             echo -e "${RED}Invalid option, please choose between 1 and 4.${NC}"
         fi
         
-        # Sleep to avoid flickering
-        sleep 1
+        # Menghapus bagian sleep agar tidak ada jeda waktu tambahan
     done
 }
 
