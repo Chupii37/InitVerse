@@ -86,10 +86,10 @@ main_menu() {
         
         # Handle user choice
         case $choice in
-            1) setup_pool_mining ;;
-            2) setup_solo_mining ;;
-            3) check_requirements ;;
-            4) echo -e "${GREEN}Exiting...${NC}"; exit 0 ;;
+            1) setup_pool_mining ; break ;;
+            2) setup_solo_mining ; break ;;
+            3) check_requirements ; break ;;
+            4) echo -e "${GREEN}Exiting...${NC}"; exit 0 ; break ;;
         esac
     done
 }
