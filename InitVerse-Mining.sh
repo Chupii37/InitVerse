@@ -162,5 +162,6 @@ screen -dmS initverse bash -c "
     echo 'miner.start(\$solo_cores)'
 "
 
-# Menyelesaikan setup
-echo -e "${GREEN}Setup Solo Mining selesai dan berjalan di sesi 'initverse'!${NC}"
+# Pindah ke sesi `screen` secara otomatis
+echo -e "${GREEN}Sekarang kamu berada di sesi screen 'initverse' untuk Solo Mining!${NC}"
+screen -r initverse
