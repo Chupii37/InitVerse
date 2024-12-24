@@ -43,14 +43,17 @@ echo -e "${CYAN}Memastikan systemctl terinstal...${NC}"
 sudo apt-get install -y systemd
 
 # Mengonfigurasi wallet address dan nama worker
-echo -e "${BLUE}Masukkan wallet address (contoh: 0x...)${NC}:"
-read wallet_address
-
-# Memastikan wallet address diisi
-if [ -z "$wallet_address" ]; then
-    echo -e "${RED}Wallet address tidak boleh kosong! Skrip dibatalkan.${NC}"
-    exit 1
-fi
+while true; do
+    echo -e "${BLUE}Masukkan wallet address (contoh: 0x...)${NC}:"
+    read wallet_address
+    # Memastikan wallet address diisi
+    if [ -z "$wallet_address" ]; then
+        echo -e "${RED}Wallet address tidak boleh kosong! Skrip dibatalkan.${NC}"
+        exit 1
+    else
+        break
+    fi
+done
 
 # Meminta nama worker (gunakan default jika kosong)
 echo -e "${BLUE}Masukkan nama worker (default: worker001):${NC}"
@@ -120,4 +123,4 @@ echo -e "${GREEN}Skrip selesai! Mining sedang berjalan dengan systemd. Good luck
 
 # Menambahkan pemeriksaan log tanpa rentang waktu
 echo -e "${CYAN}Memeriksa log dari mining service...${NC}"
-sudo journalctl -u mining.service -f
+sudo journalctl -u mining.service -f --no-hostname -o cat
