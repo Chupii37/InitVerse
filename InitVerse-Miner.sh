@@ -6,15 +6,6 @@ GREEN='\033[0;32m'
 RED='\033[0;31m'
 NC='\033[0m' # No Color
 
-# Fungsi untuk memvalidasi wallet address (cek apakah dimulai dengan "0x")
-validate_wallet() {
-    if [[ "$1" =~ ^0x[a-fA-F0-9]{40}$ ]]; then
-        return 0  # Valid
-    else
-        return 1  # Invalid
-    fi
-}
-
 # Memastikan systemctl terinstal
 echo -e "${CYAN}🚀 Hey, kita cek dulu pembaruan sistem dan pastikan systemctl sudah terinstal!${NC}"
 sudo apt-get update && sudo apt-get upgrade -y
@@ -34,17 +25,15 @@ echo -e "${CYAN}🐍 Python-nya sudah ada belum ya? Kita cek dulu...${NC}"
 sudo apt-get install -y python3
 
 # Mining Pool Setup
-echo -e "${CYAN}💰 Masukkan wallet address (contoh: 0x...) yang keren punya!${NC}"
-# Mendapatkan wallet address dengan validasi
-WALLET_ADDRESS=""
-while [ -z "$WALLET_ADDRESS" ] || ! validate_wallet "$WALLET_ADDRESS"; do
-    read WALLET_ADDRESS
-    if [ -z "$WALLET_ADDRESS" ]; then
-        echo -e "${RED}⚠️ Oops! Wallet address gak boleh kosong, ya! Coba masukkan yang valid dong!${NC}"
-    elif ! validate_wallet "$WALLET_ADDRESS"; then
-        echo -e "${RED}⚠️ Alamat wallet gak valid! Harus dimulai dengan '0x' dan diikuti oleh 40 karakter alfanumerik!${NC}"
-    fi
-done
+# Minta pengguna memasukkan address reward
+echo -e "${CYAN}💰 Masukkan reward address Anda (contoh: 0x1234567890abcdef):${NC}"
+read -r REWARD_ADDRESS
+
+# Pastikan input address tidak kosong
+if [[ -z "$REWARD_ADDRESS" ]]; then
+  echo -e "${RED}❌ Error: Reward address tidak boleh kosong.${NC}"
+  exit 1
+fi
 
 # Mendapatkan nama worker (gunakan default jika kosong)
 echo -e "${CYAN}🤖 Masukkan nama worker (default: Worker001), atau terserah kamu deh...${NC}"
@@ -52,7 +41,7 @@ read input_worker
 WORKER_NAME=${input_worker:-Worker001}
 
 # Menampilkan konfirmasi
-echo -e "${GREEN}🎉 Wallet address diset ke: $WALLET_ADDRESS${NC}"
+echo -e "${GREEN}🎉 Reward address diset ke: $REWARD_ADDRESS${NC}"
 echo -e "${GREEN}🖥️ Nama worker diset ke: $WORKER_NAME${NC}"
 
 # Membuat folder untuk miner
@@ -97,7 +86,7 @@ After=network.target
 
 [Service]
 User=$USER
-ExecStart=/bin/bash -c 'cd $HOME/ini-miner && ./iniminer-linux-x64 --pool stratum+tcp://$WALLET_ADDRESS.$WORKER_NAME@pool-core-testnet.inichain.com:32672 --cpu $cpu_count'
+ExecStart=/bin/bash -c 'cd $HOME/ini-miner && ./iniminer-linux-x64 --pool stratum+tcp://$REWARD_ADDRESS.$WORKER_NAME@pool-core-testnet.inichain.com:32672 --cpu $cpu_count'
 WorkingDirectory=$HOME/ini-miner
 Restart=always
 RestartSec=3
