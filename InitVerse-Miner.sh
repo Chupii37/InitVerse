@@ -58,7 +58,23 @@ cd ~/ini-miner
 # Download dan instal software mining
 echo -e "${CYAN}Mendownload software mining...${NC}"
 wget https://github.com/Project-InitVerse/miner/releases/download/v1.0.0/iniminer-linux-x64 -O iniminer-linux-x64
+
+# Mengecek apakah download berhasil
+if [ $? -ne 0 ]; then
+    echo -e "${RED}Gagal mendownload software mining! Periksa koneksi internet atau URL download.${NC}"
+    exit 1
+fi
+
+# Mengubah izin agar file bisa dieksekusi
 chmod +x iniminer-linux-x64
+
+# Mengecek apakah chmod berhasil
+if [ $? -ne 0 ]; then
+    echo -e "${RED}Gagal memberikan izin eksekusi pada file! Pastikan Anda memiliki izin yang cukup.${NC}"
+    exit 1
+fi
+
+echo -e "${GREEN}Software mining berhasil diunduh dan diinstal.${NC}"
 
 # Menanyakan jumlah CPU yang akan digunakan
 echo -e "${CYAN}Masukkan jumlah CPU yang ingin digunakan (contoh: 2 untuk 2 CPU):${NC}"
@@ -75,10 +91,12 @@ Description=InitVerse Miner
 After=network.target
 
 [Service]
-ExecStart=$HOME/ini-miner/iniminer-linux-x64 --pool stratum+tcp://$WALLET_ADDRESS.$WORKER_NAME@pool-core-testnet.inichain.com:32672 --cpu $cpu_count
+User=$USER
+ExecStart=/bin/bash -c 'cd $HOME/ini-miner && ./iniminer-linux-x64 --pool stratum+tcp://$WALLET_ADDRESS.$WORKER_NAME@pool-core-testnet.inichain.com:32672 --cpu $cpu_count'
 WorkingDirectory=$HOME/ini-miner
 Restart=always
-User=$USER
+RestartSec=3
+LimitNOFILE=65535
 
 [Install]
 WantedBy=multi-user.target
