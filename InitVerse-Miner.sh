@@ -47,8 +47,11 @@ while true; do
     echo -e "${BLUE}Masukkan wallet address (contoh: 0x...)${NC}:"
     read wallet_address
 
-    # Memastikan wallet address diisi
-    if [ -z "$wallet_address" ]; then
+    # Debugging: Menampilkan wallet_address untuk memastikan input
+    echo -e "Debug: Wallet address yang dimasukkan: '$wallet_address'"
+
+    # Memastikan wallet address diisi dan tidak hanya spasi kosong
+    if [[ -z "$wallet_address" || "$wallet_address" =~ ^[[:space:]]*$ ]]; then
         echo -e "${RED}Wallet address tidak boleh kosong! Skrip dibatalkan.${NC}"
         exit 1
     else
