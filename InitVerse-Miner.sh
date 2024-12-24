@@ -7,27 +7,27 @@ RED='\033[0;31m'
 NC='\033[0m' # No Color
 
 # Memastikan systemctl terinstal
-echo -e "${CYAN}🚀 Hey, kita cek dulu pembaruan sistem dan pastikan systemctl sudah terinstal!${NC}"
+echo -e "${CYAN}🚀 Memastikan systemctl terinstal...${NC}"
 sudo apt-get update && sudo apt-get upgrade -y
-
-# Memastikan systemctl terinstal
-echo -e "${CYAN}🛠️ Memastikan systemctl terinstal...${NC}"
 sudo apt-get install -y systemd
 
 # Memastikan NVM, Node.js, dan npm terinstal
-echo -e "${CYAN}😎 NVM, Node.js, dan npm? Kita pastikan semua terinstal nih...${NC}"
+echo -e "${CYAN}😎 Memastikan NVM, Node.js, dan npm terinstal nih...${NC}"
 
 # Cek apakah nvm sudah terinstal dan load NVM jika sudah ada
 if ! command -v nvm &> /dev/null
 then
     curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.0/install.sh | bash
-    source ~/.bashrc
+    export NVM_DIR="$HOME/.nvm"
+    [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
+    [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
 fi
 
+# Menginstal Node.js
 nvm install --lts
 
 # Memastikan python terinstal
-echo -e "${CYAN}🐍 Python-nya sudah ada belum ya? Kita cek dulu...${NC}"
+echo -e "${CYAN}🐍 Memastikan Python terinstal...${NC}"
 sudo apt-get install -y python3
 
 # Mining Pool Setup
