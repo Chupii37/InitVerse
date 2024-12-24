@@ -46,12 +46,13 @@ sudo apt-get install -y systemd
 while true; do
     echo -e "${BLUE}Masukkan wallet address (contoh: 0x...)${NC}:"
     read wallet_address
+
     # Memastikan wallet address diisi
     if [ -z "$wallet_address" ]; then
         echo -e "${RED}Wallet address tidak boleh kosong! Skrip dibatalkan.${NC}"
         exit 1
     else
-        break
+        break  # Keluar dari loop jika wallet address valid (tidak kosong)
     fi
 done
 
