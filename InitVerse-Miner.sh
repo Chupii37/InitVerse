@@ -16,8 +16,14 @@ sudo apt-get install -y systemd
 
 # Memastikan NVM, Node.js, dan npm terinstal
 echo -e "${CYAN}😎 NVM, Node.js, dan npm? Kita pastikan semua terinstal nih...${NC}"
-curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.0/install.sh | bash
-source ~/.bashrc
+
+# Cek apakah nvm sudah terinstal dan load NVM jika sudah ada
+if ! command -v nvm &> /dev/null
+then
+    curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.0/install.sh | bash
+    source ~/.bashrc
+fi
+
 nvm install --lts
 
 # Memastikan python terinstal
@@ -27,13 +33,17 @@ sudo apt-get install -y python3
 # Mining Pool Setup
 # Minta pengguna memasukkan address reward
 echo -e "${CYAN}💰 Masukkan reward address Anda (contoh: 0x1234567890abcdef):${NC}"
-read -r REWARD_ADDRESS
 
 # Pastikan input address tidak kosong
-if [[ -z "$REWARD_ADDRESS" ]]; then
-  echo -e "${RED}❌ Error: Reward address tidak boleh kosong.${NC}"
-  exit 1
-fi
+while true; do
+    read -r REWARD_ADDRESS
+    if [[ -z "$REWARD_ADDRESS" ]]; then
+        echo -e "${RED}❌ Error: Reward address tidak boleh kosong.${NC}"
+        echo -e "${CYAN}💰 Masukkan reward address Anda (contoh: 0x1234567890abcdef):${NC}"
+    else
+        break
+    fi
+done
 
 # Mendapatkan nama worker (gunakan default jika kosong)
 echo -e "${CYAN}🤖 Masukkan nama worker (default: Worker001), atau terserah kamu deh...${NC}"
