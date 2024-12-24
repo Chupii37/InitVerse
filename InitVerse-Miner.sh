@@ -76,16 +76,6 @@ fi
 # Memberikan izin eksekusi pada file
 chmod +x iniminer-linux-x64
 
-# Memastikan software dapat dijalankan
-echo -e "${CYAN}Memeriksa apakah software dapat dijalankan...${NC}"
-./iniminer-linux-x64 --help > /dev/null 2>&1
-if [ $? -eq 0 ]; then
-    echo -e "${GREEN}Software mining berhasil dijalankan! Yesss!${NC}"
-else
-    echo -e "${RED}Gagal menjalankan software mining. Cek lagi dong...${NC}"
-    exit 1
-fi
-
 # Menanyakan berapa banyak CPU yang akan digunakan untuk mining
 echo -e "${YELLOW}Berapa banyak CPU yang akan kamu gunakan untuk mining? (Misal: 4)${NC}"
 read cpu_count
@@ -121,9 +111,13 @@ WantedBy=multi-user.target
 EOF
 
 # Memuat dan menjalankan service
-echo -e "${CYAN}Memuat dan menjalankan service...${NC}"
+echo -e "${CYAN}Memuat dan menjalankan service dengan systemd...${NC}"
 sudo systemctl daemon-reload
 sudo systemctl enable mining.service
 sudo systemctl start mining.service
 
 echo -e "${GREEN}Skrip selesai! Mining sedang berjalan dengan systemd. Good luck!${NC}"
+
+# Menambahkan pemeriksaan log tanpa rentang waktu
+echo -e "${CYAN}Memeriksa log dari mining service...${NC}"
+sudo journalctl -u mining.service -f
