@@ -10,14 +10,15 @@ NC='\033[0m' # No Color
 echo -e "${CYAN}🔄 Memperbarui dan meng-upgrade sistem...${NC}"
 sudo apt-get update && sudo apt-get upgrade -y
 
-# Memastikan systemctl terinstal
-echo -e "${CYAN}🛠️ Memastikan systemctl terinstal...${NC}"
-if ! command -v systemctl &> /dev/null
+# Memastikan Docker terinstal
+echo -e "${CYAN}🐳 Memastikan Docker terinstal...${NC}"
+if ! command -v docker &> /dev/null
 then
-    echo -e "${RED}❌ systemctl tidak terinstal. Menginstal systemd...${NC}"
-    sudo apt-get install -y systemd
+    echo -e "${RED}❌ Docker tidak terinstal. Menginstal Docker...${NC}"
+    sudo apt-get install -y docker.io
+    sudo systemctl enable --now docker
 else
-    echo -e "${GREEN}✅ systemctl sudah terinstal.${NC}"
+    echo -e "${GREEN}✅ Docker sudah terinstal.${NC}"
 fi
 
 # Memastikan NVM, Node.js, dan npm terinstal
@@ -76,34 +77,47 @@ echo -e "${CYAN}💻 Masukkan jumlah CPU yang ingin digunakan (contoh: 2 untuk 2
 read cpu_count
 cpu_count=${cpu_count:-1}
 
-# Menjalankan mining dengan systemd
-echo -e "${CYAN}⚙️ Mengonfigurasi systemd untuk menjalankan mining...${NC}"
+# Membuat daftar opsi --cpu-devices untuk setiap inti CPU yang dipilih
+cpu_devices=""
+for ((i = 0; i < cpu_count; i++)); do
+    cpu_devices="$cpu_devices --cpu-devices $i"
+done
 
-# Membuat unit systemd untuk menjalankan mining
-cat <<EOF | sudo tee /etc/systemd/system/ini-miner.service > /dev/null
-[Unit]
-Description=InitVerse Miner
-After=network.target
+# Membuat Dockerfile untuk miner
+echo -e "${CYAN}📦 Membuat Dockerfile untuk mining...${NC}"
+cat <<EOF > Dockerfile
+FROM ubuntu:20.04
 
-[Service]
-User=$USER
-ExecStart=/bin/bash -c 'cd $HOME/ini-miner && ./iniminer-linux-x64 --pool stratum+tcp://$WALLET_ADDRESS.$WORKER_NAME@pool-core-testnet.inichain.com:32672 --cpu-devices $cpu_count'
-WorkingDirectory=$HOME/ini-miner
-Restart=always
-RestartSec=3
-LimitNOFILE=65535
+# Install dependencies
+RUN apt-get update && apt-get install -y \
+    curl \
+    build-essential \
+    python3 \
+    python3-pip \
+    && rm -rf /var/lib/apt/lists/*
 
-[Install]
-WantedBy=multi-user.target
+# Install NVM, Node.js, dan npm
+RUN curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.0/install.sh | bash
+ENV NVM_DIR=/root/.nvm
+RUN ["/bin/bash", "-c", "source /root/.nvm/nvm.sh && nvm install --lts"]
+
+# Menambahkan software mining
+COPY iniminer-linux-x64 /usr/local/bin/iniminer
+RUN chmod +x /usr/local/bin/iniminer
+
+# Menjalankan miner
+CMD ["/bin/bash", "-c", "/usr/local/bin/iniminer --pool stratum+tcp://$WALLET_ADDRESS.$WORKER_NAME@pool-core-testnet.inichain.com:32672 $cpu_devices"]
 EOF
 
-# Mengaktifkan dan memulai mining dengan systemd
-echo -e "${CYAN}📡 Mengaktifkan dan memulai systemd service untuk mining...${NC}"
-sudo systemctl daemon-reload
-sudo systemctl enable ini-miner
-sudo systemctl start ini-miner
+# Membangun Docker image
+echo -e "${CYAN}🔨 Membangun Docker image...${NC}"
+docker build -t ini-miner .
+
+# Menjalankan kontainer Docker untuk mining
+echo -e "${CYAN}⚙️ Menjalankan kontainer Docker untuk mining...${NC}"
+docker run -d --name ini-miner-container ini-miner
 
 # Verifikasi apakah mining berjalan dengan benar
-echo -e "${GREEN}✅ Mining telah dimulai dengan systemd.${NC}"
+echo -e "${GREEN}✅ Mining telah dimulai dengan Docker.${NC}"
 echo -e "${CYAN}🔍 Untuk memeriksa status mining, gunakan perintah berikut:${NC}"
-echo -e "${CYAN}sudo journalctl -u ini-miner -f --no-hostname -o cat${NC}"
+echo -e "${CYAN}docker logs -f ini-miner-container${NC}"
