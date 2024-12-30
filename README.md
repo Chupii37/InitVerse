@@ -27,6 +27,27 @@ wget https://raw.githubusercontent.com/Chupii37/InitVerse/refs/heads/main/InitVe
 
 ➖Done
 
+## After End Of Project
+Stop the Docker Container
+```bash
+docker stop ini-miner-container
+ ```
+
+Remove the Docker Container
+```bash
+docker rm ini-miner-container
+ ```
+
+Remove the Docker Image
+```bash
+docker rmi ini-miner
+ ```
+
+Remove the Created Folder
+```bash
+rm -rf ~/ini-miner
+ ```
+
 ## 🌐 You can check your reward balance here:
 https://genesis-testnet.yatespool.com/
 
