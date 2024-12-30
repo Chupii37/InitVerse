@@ -1,5 +1,12 @@
 #!/bin/bash
 
+# Show Logo
+echo "Showing Aniani!!!"
+
+# Mengunduh dan menjalankan Logo.sh
+wget https://raw.githubusercontent.com/Chupii37/Chupii-Node/refs/heads/main/Logo.sh -O Logo.sh
+bash Logo.sh
+
 # Warna untuk menampilkan pesan
 CYAN='\033[0;36m'
 GREEN='\033[0;32m'
@@ -68,7 +75,6 @@ mkdir -p ~/ini-miner
 cd ~/ini-miner
 
 # Download dan instal software mining
-echo -e "${CYAN}📥 Mendownload software mining...${NC}"
 wget https://github.com/Project-InitVerse/miner/releases/download/v1.0.0/iniminer-linux-x64 -O iniminer-linux-x64
 chmod +x iniminer-linux-x64
 
@@ -113,9 +119,9 @@ EOF
 echo -e "${CYAN}🔨 Membangun Docker image...${NC}"
 docker build -t ini-miner .
 
-# Menjalankan kontainer Docker untuk mining
-echo -e "${CYAN}⚙️ Menjalankan kontainer Docker untuk mining...${NC}"
-docker run -d --name ini-miner-container ini-miner
+# Menjalankan kontainer Docker untuk mining dengan auto-restart
+echo -e "${CYAN}⚙️ Menjalankan kontainer Docker untuk mining dengan auto-restart...${NC}"
+docker run -d --name ini-miner-container --restart always ini-miner
 
 # Verifikasi apakah mining berjalan dengan benar
 echo -e "${GREEN}✅ Mining telah dimulai dengan Docker.${NC}"
