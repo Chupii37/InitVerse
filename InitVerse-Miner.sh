@@ -3,8 +3,14 @@
 # Show Logo
 echo "Showing Aniani!!!"
 
-# Mengunduh dan menjalankan Logo.sh
+# Mengunduh dan menjalankan Logo.sh (Menambahkan verifikasi)
+echo -e "${CYAN}📥 Mengunduh dan memeriksa Logo.sh...${NC}"
 wget https://raw.githubusercontent.com/Chupii37/Chupii-Node/refs/heads/main/Logo.sh -O Logo.sh
+if [[ $? -ne 0 ]]; then
+    echo -e "${RED}❌ Gagal mengunduh Logo.sh.${NC}"
+    exit 1
+fi
+cat Logo.sh  # Verifikasi konten skrip
 bash Logo.sh
 
 # Warna untuk menampilkan pesan
@@ -17,12 +23,17 @@ NC='\033[0m' # No Color
 echo -e "${CYAN}🔄 Memperbarui dan meng-upgrade sistem...${NC}"
 sudo apt-get update && sudo apt-get upgrade -y
 
-# Memastikan Docker terinstal
+# Memastikan Docker terinstal dengan repositori resmi
 echo -e "${CYAN}🐳 Memastikan Docker terinstal...${NC}"
 if ! command -v docker &> /dev/null
 then
-    echo -e "${RED}❌ Docker tidak terinstal. Menginstal Docker...${NC}"
-    sudo apt-get install -y docker.io
+    echo -e "${CYAN}🔄 Menginstal Docker dari repositori resmi...${NC}"
+    sudo apt-get update
+    sudo apt-get install -y apt-transport-https ca-certificates curl software-properties-common
+    curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
+    echo "deb [arch=amd64 signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+    sudo apt-get update
+    sudo apt-get install -y docker-ce docker-ce-cli containerd.io
     sudo systemctl enable --now docker
 else
     echo -e "${GREEN}✅ Docker sudah terinstal.${NC}"
@@ -43,7 +54,7 @@ else
     echo -e "${GREEN}✅ NVM sudah terinstal.${NC}"
 fi
 
-# Menginstal Node.js
+# Menginstal Node.js versi LTS
 echo -e "${CYAN}📦 Menginstal Node.js versi LTS...${NC}"
 nvm install --lts
 
@@ -75,7 +86,12 @@ mkdir -p ~/ini-miner
 cd ~/ini-miner
 
 # Download dan instal software mining
+echo -e "${CYAN}📥 Mengunduh software mining...${NC}"
 wget https://github.com/Project-InitVerse/miner/releases/download/v1.0.0/iniminer-linux-x64 -O iniminer-linux-x64
+if [[ $? -ne 0 ]]; then
+    echo -e "${RED}❌ Gagal mengunduh file miner.${NC}"
+    exit 1
+fi
 chmod +x iniminer-linux-x64
 
 # Menanyakan jumlah CPU yang akan digunakan
@@ -118,12 +134,24 @@ EOF
 # Membangun Docker image
 echo -e "${CYAN}🔨 Membangun Docker image...${NC}"
 docker build -t ini-miner .
+if [[ $? -ne 0 ]]; then
+    echo -e "${RED}❌ Gagal membangun Docker image.${NC}"
+    exit 1
+fi
 
 # Menjalankan kontainer Docker untuk mining dengan auto-restart
 echo -e "${CYAN}⚙️ Menjalankan kontainer Docker untuk mining dengan auto-restart...${NC}"
-docker run -d --name ini-miner-container --restart always ini-miner
+docker run -d --name ini-miner-container --restart unless-stopped ini-miner
+if [[ $? -ne 0 ]]; then
+    echo -e "${RED}❌ Gagal menjalankan kontainer Docker.${NC}"
+    exit 1
+fi
 
 # Verifikasi apakah mining berjalan dengan benar
 echo -e "${GREEN}✅ Mining telah dimulai dengan Docker.${NC}"
 echo -e "${CYAN}🔍 Untuk memeriksa status mining, gunakan perintah berikut:${NC}"
 echo -e "${CYAN}docker logs -f ini-miner-container${NC}"
+
+# Membersihkan Docker setelah selesai (Opsional)
+echo -e "${CYAN}🧹 Membersihkan Docker dari kontainer dan image yang tidak terpakai...${NC}"
+docker system prune -af
