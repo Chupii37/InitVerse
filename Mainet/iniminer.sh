@@ -85,12 +85,13 @@ get_cpu_usage() {
 
 # Prompt for pool selection
 get_pool_selection() {
-    log_message "${CYAN}🌍 Select mining pool (a or b): ${RESET}"
+    log_message "${CYAN}🌍 Select mining pool (a, b, or c): ${RESET}"
     read POOL
     case "$POOL" in
         a|A) pool="pool-a.yatespool.com:31588" ;;
         b|B) pool="pool-b.yatespool.com:32488" ;;
-        *) handle_error "🚨 Invalid pool selection. Please select 'a' or 'b'." ;;
+        c|C) pool="pool-c.yatespool.com:31189" ;;
+        *) handle_error "🚨 Invalid pool selection. Please select 'a', 'b', or 'c'." ;;
     esac
     log_message "${CYAN}Selected pool: $pool${RESET}"  # Debugging log to verify pool selection
 }
