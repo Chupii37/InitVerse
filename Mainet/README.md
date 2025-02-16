@@ -20,7 +20,7 @@ wget https://raw.githubusercontent.com/Chupii37/InitVerse/refs/heads/main/Mainet
 
 ➖The number of CPUs you want to use
 
-➖Choose pool A or B
+➖Choose pool A, B or C
 
 ➖Done
 
@@ -49,6 +49,8 @@ rm -rf ~/inichain-docker
 If you choose pool A : https://a.yatespool.com/
 
 If you choose pool B : https://b.yatespool.com/
+
+If you choose pool C : https://c.yatespool.com
 
 Just input the Wallet Address used earlier
 
